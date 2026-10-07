@@ -6,6 +6,10 @@
 
   <title>ProTrack Driver</title>
 
+  <!-- ProTrack configuration -->
+  <script src="config.js"></script>
+
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -74,6 +78,11 @@
 
     .login-box h2 {
       margin-top: 0;
+    }
+
+    .login-box p {
+      color: #6b7280;
+      line-height: 1.5;
     }
 
     input {
@@ -265,20 +274,12 @@
       padding: 14px;
     }
 
-    .action-btn.secondary {
-      background: #4b5563;
-    }
-
-    .action-btn.success {
-      background: #059669;
-    }
-
     .action-btn.warning {
       background: #d97706;
     }
 
-    .action-btn.danger {
-      background: #dc2626;
+    .action-btn.success {
+      background: #059669;
     }
 
     .empty {
@@ -327,11 +328,17 @@
 
 <body>
 
-  <!-- LOGIN -->
+  <!-- =====================================================
+       LOGIN
+  ====================================================== -->
+
   <div id="loginScreen" class="login-box">
 
     <h2>ProTrack Driver</h2>
-    <p>Sign in to access your assigned trips.</p>
+
+    <p>
+      Sign in using your ProTrack account.
+    </p>
 
     <div id="loginError" class="error hidden"></div>
 
@@ -349,14 +356,20 @@
       autocomplete="current-password"
     >
 
-    <button class="login-btn" onclick="login()">
+    <button
+      class="login-btn"
+      onclick="login()"
+    >
       Sign In
     </button>
 
   </div>
 
 
-  <!-- DRIVER APP -->
+  <!-- =====================================================
+       DRIVER APPLICATION
+  ====================================================== -->
+
   <div id="app" class="hidden">
 
     <header>
@@ -366,7 +379,10 @@
         <small id="driverName">Driver</small>
       </div>
 
-      <button class="logout-btn" onclick="logout()">
+      <button
+        class="logout-btn"
+        onclick="logout()"
+      >
         Sign Out
       </button>
 
@@ -381,7 +397,10 @@
 
         <h2>Today's Trips</h2>
 
-        <div class="date" id="todayDate"></div>
+        <div
+          class="date"
+          id="todayDate"
+        ></div>
 
       </div>
 
@@ -400,78 +419,98 @@
 
 <script>
 
-  /* =========================================================
-     CONFIG
-  ========================================================= */
+  /* =====================================================
+     CONFIGURATION
+  ====================================================== */
+
+  if (!window.PROTRACK_CONFIG) {
+
+    document.body.innerHTML = `
+      <div style="
+        max-width:600px;
+        margin:80px auto;
+        padding:30px;
+        font-family:Arial;
+      ">
+        <h2>Configuration Error</h2>
+
+        <p>
+          config.js could not be loaded.
+        </p>
+
+        <p>
+          Make sure <strong>config.js</strong> is in the
+          same GitHub folder as <strong>driver.html</strong>.
+        </p>
+      </div>
+    `;
+
+    throw new Error(
+      "PROTRACK_CONFIG is missing"
+    );
+  }
+
 
   const config = window.PROTRACK_CONFIG;
 
-  if (!config) {
+
+  /* =====================================================
+     SUPABASE
+  ====================================================== */
+
+  if (
+    !config.supabaseUrl ||
+    !config.supabaseKey
+  ) {
+
     document.body.innerHTML = `
-      <div style="padding:30px;font-family:Arial">
+      <div style="
+        max-width:600px;
+        margin:80px auto;
+        padding:30px;
+        font-family:Arial;
+      ">
         <h2>Configuration Error</h2>
-        <p>config.js could not be loaded.</p>
+
+        <p>
+          Supabase configuration is incomplete.
+        </p>
       </div>
     `;
-    throw new Error("PROTRACK_CONFIG missing");
+
+    throw new Error(
+      "Supabase configuration incomplete"
+    );
   }
 
-  const supabaseClient = window.supabase.createClient(
-    config.supabaseUrl,
-    config.supabaseKey
-  );
+
+  const supabaseClient =
+    window.supabase.createClient(
+      config.supabaseUrl,
+      config.supabaseKey
+    );
 
 
-  /* =========================================================
-     GLOBAL STATE
-  ========================================================= */
+  /* =====================================================
+     STATE
+  ====================================================== */
 
   let currentUser = null;
   let currentProfile = null;
+
   let realtimeChannels = [];
 
 
-  /* =========================================================
+  /* =====================================================
      HELPERS
-  ========================================================= */
-
-  function showError(message) {
-
-    const box = document.getElementById("loginError");
-
-    box.textContent = message;
-    box.classList.remove("hidden");
-  }
-
-
-  function clearLoginError() {
-
-    const box = document.getElementById("loginError");
-
-    box.textContent = "";
-    box.classList.add("hidden");
-  }
-
-
-  function showMessage(message, type = "success") {
-
-    const box = document.getElementById("message");
-
-    box.innerHTML = `
-      <div class="${type}">
-        ${escapeHtml(message)}
-      </div>
-    `;
-
-    setTimeout(() => {
-      box.innerHTML = "";
-    }, 4000);
-  }
-
+  ====================================================== */
 
   function escapeHtml(value) {
 
-    if (value === null || value === undefined) {
+    if (
+      value === null ||
+      value === undefined
+    ) {
       return "";
     }
 
@@ -486,601 +525,45 @@
 
   function formatMoney(value) {
 
-    if (value === null || value === undefined) {
+    if (
+      value === null ||
+      value === undefined
+    ) {
       return "$0.00";
     }
 
-    return "$" + Number(value).toFixed(2);
+    return "$" +
+      Number(value).toFixed(2);
   }
 
 
   function formatStatus(status) {
 
     const labels = {
+
       scheduled: "Scheduled",
+
       assigned: "Assigned",
+
       accepted: "Accepted",
+
       en_route: "En Route",
+
       arrived: "Arrived",
-      passenger_onboard: "Passenger Onboard",
+
+      passenger_onboard:
+        "Passenger Onboard",
+
       completed: "Completed",
+
       cancelled: "Cancelled"
+
     };
 
     return labels[status] || status;
-  }
-
-
-  function formatDateTime(value) {
-
-    if (!value) {
-      return "—";
-    }
-
-    const date = new Date(value);
-
-    return date.toLocaleString([], {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit"
-    });
-  }
-
-
-  function getTodayRange() {
-
-    const now = new Date();
-
-    const start = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      0,
-      0,
-      0
-    );
-
-    const end = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      23,
-      59,
-      59
-    );
-
-    return {
-      start: start.toISOString(),
-      end: end.toISOString()
-    };
-  }
-
-
-  /* =========================================================
-     LOGIN
-  ========================================================= */
-
-  async function login() {
-
-    clearLoginError();
-
-    const email =
-      document.getElementById("email").value.trim();
-
-    const password =
-      document.getElementById("password").value;
-
-    if (!email || !password) {
-
-      showError("Please enter your email and password.");
-
-      return;
-    }
-
-    const { data, error } =
-      await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-      });
-
-    if (error) {
-
-      showError(error.message);
-
-      return;
-    }
-
-    currentUser = data.user;
-
-    await loadProfile();
 
   }
 
-
-  /* =========================================================
-     LOAD PROFILE
-  ========================================================= */
-
-  async function loadProfile() {
-
-    const {
-      data,
-      error
-    } = await supabaseClient
-      .from("profiles")
-      .select("*")
-      .eq("id", currentUser.id)
-      .single();
-
-    if (error) {
-
-      await supabaseClient.auth.signOut();
-
-      showError(
-        "Your account exists, but no ProTrack profile was found."
-      );
-
-      return;
-    }
-
-    currentProfile = data;
-
-
-    /*
-      IMPORTANT:
-
-      Driver access is allowed when:
-
-      1. role = driver
-
-      OR
-
-      2. driver_access = true
-
-      This means your manager account can also use
-      the Driver App.
-    */
-
-    const hasDriverAccess =
-      currentProfile.role === "driver" ||
-      currentProfile.driver_access === true;
-
-
-    if (!hasDriverAccess) {
-
-      await supabaseClient.auth.signOut();
-
-      showError(
-        "Your account does not have Driver App access."
-      );
-
-      return;
-    }
-
-
-    if (currentProfile.active === false) {
-
-      await supabaseClient.auth.signOut();
-
-      showError(
-        "Your ProTrack account is inactive."
-      );
-
-      return;
-    }
-
-
-    document.getElementById("loginScreen")
-      .classList.add("hidden");
-
-    document.getElementById("app")
-      .classList.remove("hidden");
-
-
-    document.getElementById("driverName").textContent =
-      currentProfile.full_name ||
-      currentUser.email;
-
-
-    const now = new Date();
-
-    document.getElementById("todayDate").textContent =
-      now.toLocaleDateString([], {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-      });
-
-
-    await loadTrips();
-
-    subscribeToRealtime();
-
-  }
-
-
-  /* =========================================================
-     LOAD TODAY'S ASSIGNED TRIPS
-  ========================================================= */
-
-  async function loadTrips() {
-
-    const list =
-      document.getElementById("tripList");
-
-    list.innerHTML = `
-      <div class="loading">
-        Loading trips...
-      </div>
-    `;
-
-
-    const {
-      start,
-      end
-    } = getTodayRange();
-
-
-    const {
-      data: assignments,
-      error
-    } = await supabaseClient
-      .from("trip_assignments")
-      .select(`
-        id,
-        trip_id,
-        driver_id,
-        status,
-        trips (
-          id,
-          booking_reference,
-          scheduled_at,
-          client_id,
-          pickup_location,
-          destination,
-          passengers,
-          price,
-          payment_status,
-          collect_on_return,
-          special_instructions,
-          status
-        )
-      `)
-      .eq("driver_id", currentUser.id);
-
-
-    if (error) {
-
-      console.error(error);
-
-      list.innerHTML = `
-        <div class="error">
-          Unable to load your trips.
-          ${escapeHtml(error.message)}
-        </div>
-      `;
-
-      return;
-    }
-
-
-    const trips = (assignments || [])
-      .filter(item => {
-
-        if (!item.trips) {
-          return false;
-        }
-
-        const scheduled =
-          new Date(item.trips.scheduled_at);
-
-        return (
-          scheduled >= new Date(start) &&
-          scheduled <= new Date(end)
-        );
-      })
-      .sort((a, b) => {
-
-        return new Date(a.trips.scheduled_at)
-          - new Date(b.trips.scheduled_at);
-
-      });
-
-
-    if (!trips.length) {
-
-      list.innerHTML = `
-        <div class="empty">
-          <h3>No trips today</h3>
-          <p>You currently have no trips assigned for today.</p>
-        </div>
-      `;
-
-      return;
-    }
-
-
-    list.innerHTML =
-      trips.map(renderTrip).join("");
-
-  }
-
-
-  /* =========================================================
-     RENDER TRIP
-  ========================================================= */
-
-  function renderTrip(assignment) {
-
-    const trip = assignment.trips;
-
-    const status = trip.status;
-
-    const statusClass =
-      "status-" + status;
-
-
-    let actionButtons = "";
-
-
-    if (
-      status === "scheduled" ||
-      status === "assigned"
-    ) {
-
-      actionButtons += `
-        <button
-          class="action-btn"
-          onclick="updateTripStatus(
-            '${trip.id}',
-            '${assignment.id}',
-            'accepted'
-          )"
-        >
-          Accept Trip
-        </button>
-      `;
-
-    }
-
-
-    if (status === "accepted") {
-
-      actionButtons += `
-        <button
-          class="action-btn warning"
-          onclick="updateTripStatus(
-            '${trip.id}',
-            '${assignment.id}',
-            'en_route'
-          )"
-        >
-          Start Trip — En Route
-        </button>
-      `;
-
-    }
-
-
-    if (status === "en_route") {
-
-      actionButtons += `
-        <button
-          class="action-btn warning"
-          onclick="updateTripStatus(
-            '${trip.id}',
-            '${assignment.id}',
-            'arrived'
-          )"
-        >
-          Arrived
-        </button>
-      `;
-
-    }
-
-
-    if (status === "arrived") {
-
-      actionButtons += `
-        <button
-          class="action-btn"
-          onclick="updateTripStatus(
-            '${trip.id}',
-            '${assignment.id}',
-            'passenger_onboard'
-          )"
-        >
-          Passenger Onboard
-        </button>
-      `;
-
-    }
-
-
-    if (status === "passenger_onboard") {
-
-      actionButtons += `
-        <button
-          class="action-btn success"
-          onclick="updateTripStatus(
-            '${trip.id}',
-            '${assignment.id}',
-            'completed'
-          )"
-        >
-          Complete Trip
-        </button>
-      `;
-
-    }
-
-
-    if (status === "completed") {
-
-      actionButtons = `
-        <div class="success">
-          Trip completed.
-        </div>
-      `;
-
-    }
-
-
-    let paymentClass = "";
-
-    if (trip.payment_status === "unpaid") {
-      paymentClass = "unpaid";
-    }
-
-    if (trip.collect_on_return) {
-      paymentClass = "return";
-    }
-
-
-    return `
-
-      <div class="trip-card">
-
-        <div class="trip-header">
-
-          <div>
-
-            <div class="booking-ref">
-              ${escapeHtml(
-                trip.booking_reference || "No reference"
-              )}
-            </div>
-
-            <div class="trip-time">
-              ${formatDateTime(trip.scheduled_at)}
-            </div>
-
-          </div>
-
-          <div class="status ${statusClass}">
-            ${formatStatus(status)}
-          </div>
-
-        </div>
-
-
-        <div class="route">
-
-          <div class="location">
-
-            <div class="location-label">
-              Pickup
-            </div>
-
-            <div class="location-value">
-              ${escapeHtml(trip.pickup_location)}
-            </div>
-
-          </div>
-
-
-          <div class="location">
-
-            <div class="location-label">
-              Destination
-            </div>
-
-            <div class="location-value">
-              ${escapeHtml(trip.destination)}
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div class="details">
-
-          <div class="detail">
-
-            <div class="detail-label">
-              Passengers
-            </div>
-
-            <div class="detail-value">
-              ${escapeHtml(trip.passengers)}
-            </div>
-
-          </div>
-
-
-          <div class="detail">
-
-            <div class="detail-label">
-              Trip Value
-            </div>
-
-            <div class="detail-value">
-              ${formatMoney(trip.price)}
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div class="payment ${paymentClass}">
-
-          <strong>Payment:</strong>
-
-          ${escapeHtml(
-            formatPaymentStatus(
-              trip.payment_status
-            )
-          )}
-
-          ${
-            trip.collect_on_return
-              ? "<br><strong>⚠ Collect payment on return trip</strong>"
-              : ""
-          }
-
-        </div>
-
-
-        ${
-          trip.special_instructions
-            ? `
-              <div class="instructions">
-
-                <strong>Special Instructions</strong>
-
-                <div style="margin-top:6px">
-                  ${escapeHtml(
-                    trip.special_instructions
-                  )}
-                </div>
-
-              </div>
-            `
-            : ""
-        }
-
-
-        <div class="actions">
-
-          ${actionButtons}
-
-        </div>
-
-      </div>
-
-    `;
-
-  }
-
-
-  /* =========================================================
-     PAYMENT STATUS
-  ========================================================= */
 
   function formatPaymentStatus(status) {
 
@@ -1099,14 +582,861 @@
 
     };
 
-    return labels[status] || status || "Unknown";
+    return labels[status] ||
+      status ||
+      "Unknown";
 
   }
 
 
-  /* =========================================================
-     UPDATE TRIP STATUS
-  ========================================================= */
+  function formatDateTime(value) {
+
+    if (!value) {
+      return "—";
+    }
+
+    const date = new Date(value);
+
+    return date.toLocaleString([], {
+
+      month: "short",
+
+      day: "numeric",
+
+      hour: "numeric",
+
+      minute: "2-digit"
+
+    });
+
+  }
+
+
+  function showError(message) {
+
+    const box =
+      document.getElementById(
+        "loginError"
+      );
+
+    box.textContent = message;
+
+    box.classList.remove(
+      "hidden"
+    );
+
+  }
+
+
+  function clearLoginError() {
+
+    const box =
+      document.getElementById(
+        "loginError"
+      );
+
+    box.textContent = "";
+
+    box.classList.add(
+      "hidden"
+    );
+
+  }
+
+
+  function showMessage(
+    message,
+    type = "success"
+  ) {
+
+    const box =
+      document.getElementById(
+        "message"
+      );
+
+    box.innerHTML = `
+      <div class="${type}">
+        ${escapeHtml(message)}
+      </div>
+    `;
+
+    setTimeout(() => {
+
+      box.innerHTML = "";
+
+    }, 4000);
+
+  }
+
+
+  function getTodayRange() {
+
+    const now = new Date();
+
+    const start =
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0,
+        0,
+        0
+      );
+
+    const end =
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        23,
+        59,
+        59
+      );
+
+    return {
+
+      start:
+        start.toISOString(),
+
+      end:
+        end.toISOString()
+
+    };
+
+  }
+
+
+  /* =====================================================
+     LOGIN
+  ====================================================== */
+
+  async function login() {
+
+    clearLoginError();
+
+    const email =
+      document
+        .getElementById("email")
+        .value
+        .trim();
+
+    const password =
+      document
+        .getElementById("password")
+        .value;
+
+
+    if (!email || !password) {
+
+      showError(
+        "Please enter your email and password."
+      );
+
+      return;
+    }
+
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient.auth
+        .signInWithPassword({
+
+          email: email,
+
+          password: password
+
+        });
+
+
+    if (error) {
+
+      showError(
+        error.message
+      );
+
+      return;
+    }
+
+
+    currentUser =
+      data.user;
+
+
+    await loadProfile();
+
+  }
+
+
+  /* =====================================================
+     LOAD PROFILE
+  ====================================================== */
+
+  async function loadProfile() {
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("profiles")
+        .select("*")
+        .eq(
+          "id",
+          currentUser.id
+        )
+        .single();
+
+
+    if (error) {
+
+      console.error(
+        "Profile error:",
+        error
+      );
+
+      await supabaseClient.auth
+        .signOut();
+
+      showError(
+        "Unable to load your ProTrack profile."
+      );
+
+      return;
+    }
+
+
+    currentProfile = data;
+
+
+    /*
+      DRIVER ACCESS
+
+      A user can enter the Driver App if:
+
+      1. Their role is "driver"
+
+      OR
+
+      2. Their driver_access value is true
+
+      This allows your existing manager account
+      to use BOTH applications.
+    */
+
+    const role =
+      String(
+        currentProfile.role || ""
+      ).toLowerCase();
+
+
+    const driverAccess =
+      currentProfile.driver_access === true ||
+      String(
+        currentProfile.driver_access
+      ).toLowerCase() === "true";
+
+
+    const isActive =
+      currentProfile.active === true;
+
+
+    const hasDriverAccess =
+      isActive &&
+      (
+        role === "driver" ||
+        driverAccess
+      );
+
+
+    console.log(
+      "ProTrack profile:",
+      currentProfile
+    );
+
+    console.log(
+      "Role:",
+      role
+    );
+
+    console.log(
+      "Driver access:",
+      driverAccess
+    );
+
+    console.log(
+      "Active:",
+      isActive
+    );
+
+    console.log(
+      "Has driver access:",
+      hasDriverAccess
+    );
+
+
+    if (!hasDriverAccess) {
+
+      await supabaseClient.auth
+        .signOut();
+
+      showError(
+        "This account does not have Driver App access."
+      );
+
+      return;
+    }
+
+
+    /*
+      ACCESS GRANTED
+    */
+
+    document
+      .getElementById("loginScreen")
+      .classList.add("hidden");
+
+
+    document
+      .getElementById("app")
+      .classList.remove("hidden");
+
+
+    document
+      .getElementById("driverName")
+      .textContent =
+        currentProfile.full_name ||
+        currentUser.email;
+
+
+    document
+      .getElementById("todayDate")
+      .textContent =
+        new Date().toLocaleDateString(
+          [],
+          {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+          }
+        );
+
+
+    await loadTrips();
+
+
+    subscribeToRealtime();
+
+  }
+
+
+  /* =====================================================
+     LOAD TRIPS
+  ====================================================== */
+
+  async function loadTrips() {
+
+    const list =
+      document.getElementById(
+        "tripList"
+      );
+
+
+    list.innerHTML = `
+      <div class="loading">
+        Loading trips...
+      </div>
+    `;
+
+
+    const {
+      start,
+      end
+    } =
+      getTodayRange();
+
+
+    const {
+      data: assignments,
+      error
+    } =
+      await supabaseClient
+        .from("trip_assignments")
+        .select(`
+          id,
+          trip_id,
+          driver_id,
+          status,
+          trips (
+            id,
+            booking_reference,
+            scheduled_at,
+            pickup_location,
+            destination,
+            passengers,
+            price,
+            payment_status,
+            collect_on_return,
+            special_instructions,
+            status
+          )
+        `)
+        .eq(
+          "driver_id",
+          currentUser.id
+        );
+
+
+    if (error) {
+
+      console.error(
+        "Trips error:",
+        error
+      );
+
+      list.innerHTML = `
+        <div class="error">
+          Unable to load your trips.
+          <br><br>
+          ${escapeHtml(
+            error.message
+          )}
+        </div>
+      `;
+
+      return;
+    }
+
+
+    const trips =
+      (assignments || [])
+        .filter(item => {
+
+          if (!item.trips) {
+            return false;
+          }
+
+          const scheduled =
+            new Date(
+              item.trips.scheduled_at
+            );
+
+
+          return (
+            scheduled >=
+              new Date(start) &&
+            scheduled <=
+              new Date(end)
+          );
+
+        })
+        .sort((a, b) => {
+
+          return (
+            new Date(
+              a.trips.scheduled_at
+            ) -
+            new Date(
+              b.trips.scheduled_at
+            )
+          );
+
+        });
+
+
+    if (!trips.length) {
+
+      list.innerHTML = `
+        <div class="empty">
+
+          <h3>
+            No trips today
+          </h3>
+
+          <p>
+            You currently have no trips
+            assigned for today.
+          </p>
+
+        </div>
+      `;
+
+      return;
+    }
+
+
+    list.innerHTML =
+      trips
+        .map(renderTrip)
+        .join("");
+
+  }
+
+
+  /* =====================================================
+     RENDER TRIP
+  ====================================================== */
+
+  function renderTrip(
+    assignment
+  ) {
+
+    const trip =
+      assignment.trips;
+
+
+    const status =
+      trip.status;
+
+
+    const statusClass =
+      "status-" + status;
+
+
+    let actionButtons = "";
+
+
+    if (
+      status === "scheduled" ||
+      status === "assigned"
+    ) {
+
+      actionButtons += `
+
+        <button
+          class="action-btn"
+          onclick="updateTripStatus(
+            '${trip.id}',
+            '${assignment.id}',
+            'accepted'
+          )"
+        >
+          Accept Trip
+        </button>
+
+      `;
+
+    }
+
+
+    if (
+      status === "accepted"
+    ) {
+
+      actionButtons += `
+
+        <button
+          class="action-btn warning"
+          onclick="updateTripStatus(
+            '${trip.id}',
+            '${assignment.id}',
+            'en_route'
+          )"
+        >
+          Start Trip — En Route
+        </button>
+
+      `;
+
+    }
+
+
+    if (
+      status === "en_route"
+    ) {
+
+      actionButtons += `
+
+        <button
+          class="action-btn warning"
+          onclick="updateTripStatus(
+            '${trip.id}',
+            '${assignment.id}',
+            'arrived'
+          )"
+        >
+          Arrived
+        </button>
+
+      `;
+
+    }
+
+
+    if (
+      status === "arrived"
+    ) {
+
+      actionButtons += `
+
+        <button
+          class="action-btn"
+          onclick="updateTripStatus(
+            '${trip.id}',
+            '${assignment.id}',
+            'passenger_onboard'
+          )"
+        >
+          Passenger Onboard
+        </button>
+
+      `;
+
+    }
+
+
+    if (
+      status === "passenger_onboard"
+    ) {
+
+      actionButtons += `
+
+        <button
+          class="action-btn success"
+          onclick="updateTripStatus(
+            '${trip.id}',
+            '${assignment.id}',
+            'completed'
+          )"
+        >
+          Complete Trip
+        </button>
+
+      `;
+
+    }
+
+
+    if (
+      status === "completed"
+    ) {
+
+      actionButtons = `
+
+        <div class="success">
+          Trip completed.
+        </div>
+
+      `;
+
+    }
+
+
+    let paymentClass = "";
+
+
+    if (
+      trip.payment_status ===
+      "unpaid"
+    ) {
+
+      paymentClass =
+        "unpaid";
+
+    }
+
+
+    if (
+      trip.collect_on_return
+    ) {
+
+      paymentClass =
+        "return";
+
+    }
+
+
+    return `
+
+      <div class="trip-card">
+
+        <div class="trip-header">
+
+          <div>
+
+            <div class="booking-ref">
+
+              ${escapeHtml(
+                trip.booking_reference ||
+                "No reference"
+              )}
+
+            </div>
+
+            <div class="trip-time">
+
+              ${formatDateTime(
+                trip.scheduled_at
+              )}
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="status ${statusClass}"
+          >
+
+            ${formatStatus(
+              status
+            )}
+
+          </div>
+
+        </div>
+
+
+        <div class="route">
+
+          <div class="location">
+
+            <div class="location-label">
+              Pickup
+            </div>
+
+            <div class="location-value">
+
+              ${escapeHtml(
+                trip.pickup_location
+              )}
+
+            </div>
+
+          </div>
+
+
+          <div class="location">
+
+            <div class="location-label">
+              Destination
+            </div>
+
+            <div class="location-value">
+
+              ${escapeHtml(
+                trip.destination
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="details">
+
+          <div class="detail">
+
+            <div class="detail-label">
+              Passengers
+            </div>
+
+            <div class="detail-value">
+
+              ${escapeHtml(
+                trip.passengers
+              )}
+
+            </div>
+
+          </div>
+
+
+          <div class="detail">
+
+            <div class="detail-label">
+              Trip Value
+            </div>
+
+            <div class="detail-value">
+
+              ${formatMoney(
+                trip.price
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div
+          class="payment ${paymentClass}"
+        >
+
+          <strong>
+            Payment:
+          </strong>
+
+          ${escapeHtml(
+            formatPaymentStatus(
+              trip.payment_status
+            )
+          )}
+
+          ${
+            trip.collect_on_return
+              ? `
+                <br>
+                <strong>
+                  ⚠ Collect payment
+                  on return trip
+                </strong>
+              `
+              : ""
+          }
+
+        </div>
+
+
+        ${
+          trip.special_instructions
+            ? `
+
+              <div class="instructions">
+
+                <strong>
+                  Special Instructions
+                </strong>
+
+                <div
+                  style="margin-top:6px"
+                >
+
+                  ${escapeHtml(
+                    trip.special_instructions
+                  )}
+
+                </div>
+
+              </div>
+
+            `
+            : ""
+        }
+
+
+        <div class="actions">
+
+          ${actionButtons}
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+
+  /* =====================================================
+     UPDATE STATUS
+  ====================================================== */
 
   async function updateTripStatus(
     tripId,
@@ -1116,8 +1446,11 @@
 
     const confirmed =
       confirm(
-        `Change trip status to "${formatStatus(newStatus)}"?`
+        `Change trip status to "${formatStatus(
+          newStatus
+        )}"?`
       );
+
 
     if (!confirmed) {
       return;
@@ -1125,25 +1458,32 @@
 
 
     const {
-      data: trip,
-      error: tripError
-    } = await supabaseClient
-      .from("trips")
-      .update({
-        status: newStatus
-      })
-      .eq("id", tripId)
-      .select()
-      .single();
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("trips")
+        .update({
+          status: newStatus
+        })
+        .eq(
+          "id",
+          tripId
+        )
+        .select()
+        .single();
 
 
-    if (tripError) {
+    if (error) {
 
-      console.error(tripError);
+      console.error(
+        "Trip update error:",
+        error
+      );
 
       showMessage(
         "Unable to update trip: " +
-        tripError.message,
+        error.message,
         "error"
       );
 
@@ -1152,22 +1492,29 @@
 
 
     /*
-      Record the status change.
+      Record status history.
     */
 
     const {
-      error: historyError
-    } = await supabaseClient
-      .from("trip_status_history")
-      .insert({
+      error:
+        historyError
+    } =
+      await supabaseClient
+        .from(
+          "trip_status_history"
+        )
+        .insert({
 
-        trip_id: tripId,
+          trip_id:
+            tripId,
 
-        status: newStatus,
+          status:
+            newStatus,
 
-        changed_by: currentUser.id
+          changed_by:
+            currentUser.id
 
-      });
+        });
 
 
     if (historyError) {
@@ -1181,20 +1528,37 @@
 
 
     /*
-      When completed, mark the assignment completed.
+      Completed trips also complete
+      the driver's assignment.
     */
 
-    if (newStatus === "completed") {
+    if (
+      newStatus ===
+      "completed"
+    ) {
 
       const {
-        error: assignmentError
-      } = await supabaseClient
-        .from("trip_assignments")
-        .update({
-          status: "completed"
-        })
-        .eq("id", assignmentId)
-        .eq("driver_id", currentUser.id);
+        error:
+          assignmentError
+      } =
+        await supabaseClient
+          .from(
+            "trip_assignments"
+          )
+          .update({
+
+            status:
+              "completed"
+
+          })
+          .eq(
+            "id",
+            assignmentId
+          )
+          .eq(
+            "driver_id",
+            currentUser.id
+          );
 
 
       if (assignmentError) {
@@ -1210,7 +1574,9 @@
 
 
     showMessage(
-      `Trip updated to ${formatStatus(newStatus)}.`
+      "Trip updated to " +
+      formatStatus(newStatus) +
+      "."
     );
 
 
@@ -1219,18 +1585,23 @@
   }
 
 
-  /* =========================================================
+  /* =====================================================
      REALTIME
-  ========================================================= */
+  ====================================================== */
 
   function subscribeToRealtime() {
 
-    realtimeChannels.forEach(channel => {
+    realtimeChannels.forEach(
+      channel => {
 
-      supabaseClient
-        .removeChannel(channel);
+        supabaseClient
+          .removeChannel(
+            channel
+          );
 
-    });
+      }
+    );
+
 
     realtimeChannels = [];
 
@@ -1242,20 +1613,30 @@
           currentUser.id
         )
         .on(
+
           "postgres_changes",
+
           {
+
             event: "*",
+
             schema: "public",
-            table: "trip_assignments",
+
+            table:
+              "trip_assignments",
+
             filter:
               "driver_id=eq." +
               currentUser.id
+
           },
+
           () => {
 
             loadTrips();
 
           }
+
         )
         .subscribe();
 
@@ -1267,17 +1648,26 @@
           currentUser.id
         )
         .on(
+
           "postgres_changes",
+
           {
+
             event: "*",
+
             schema: "public",
-            table: "trips"
+
+            table:
+              "trips"
+
           },
+
           () => {
 
             loadTrips();
 
           }
+
         )
         .subscribe();
 
@@ -1290,43 +1680,59 @@
   }
 
 
-  /* =========================================================
+  /* =====================================================
      LOGOUT
-  ========================================================= */
+  ====================================================== */
 
   async function logout() {
 
-    realtimeChannels.forEach(channel => {
+    realtimeChannels.forEach(
+      channel => {
 
-      supabaseClient
-        .removeChannel(channel);
+        supabaseClient
+          .removeChannel(
+            channel
+          );
 
-    });
+      }
+    );
+
 
     realtimeChannels = [];
 
 
-    await supabaseClient.auth.signOut();
+    await supabaseClient.auth
+      .signOut();
+
 
     currentUser = null;
     currentProfile = null;
 
 
-    document.getElementById("app")
-      .classList.add("hidden");
+    document
+      .getElementById("app")
+      .classList.add(
+        "hidden"
+      );
 
-    document.getElementById("loginScreen")
-      .classList.remove("hidden");
 
-    document.getElementById("password")
+    document
+      .getElementById("loginScreen")
+      .classList.remove(
+        "hidden"
+      );
+
+
+    document
+      .getElementById("password")
       .value = "";
 
   }
 
 
-  /* =========================================================
-     AUTO LOGIN / SESSION CHECK
-  ========================================================= */
+  /* =====================================================
+     INITIALIZE
+  ====================================================== */
 
   async function initialize() {
 
@@ -1334,12 +1740,15 @@
       data: {
         session
       }
-    } = await supabaseClient.auth.getSession();
+    } =
+      await supabaseClient.auth
+        .getSession();
 
 
     if (session) {
 
-      currentUser = session.user;
+      currentUser =
+        session.user;
 
       await loadProfile();
 
@@ -1348,19 +1757,35 @@
   }
 
 
-  supabaseClient.auth.onAuthStateChange(
-    async (event, session) => {
+  /* =====================================================
+     AUTH STATE
+  ====================================================== */
 
-      if (event === "SIGNED_OUT") {
+  supabaseClient.auth
+    .onAuthStateChange(
+      async (
+        event,
+        session
+      ) => {
 
-        currentUser = null;
-        currentProfile = null;
+        if (
+          event ===
+          "SIGNED_OUT"
+        ) {
+
+          currentUser = null;
+
+          currentProfile = null;
+
+        }
 
       }
+    );
 
-    }
-  );
 
+  /* =====================================================
+     START
+  ====================================================== */
 
   initialize();
 
