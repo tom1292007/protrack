@@ -6,10 +6,7 @@
 
   <title>ProTrack Driver</title>
 
-  <!-- ProTrack configuration -->
   <script src="config.js"></script>
-
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -328,9 +325,7 @@
 
 <body>
 
-  <!-- =====================================================
-       LOGIN
-  ====================================================== -->
+  <!-- LOGIN -->
 
   <div id="loginScreen" class="login-box">
 
@@ -366,9 +361,7 @@
   </div>
 
 
-  <!-- =====================================================
-       DRIVER APPLICATION
-  ====================================================== -->
+  <!-- DRIVER APP -->
 
   <div id="app" class="hidden">
 
@@ -420,7 +413,7 @@
 <script>
 
   /* =====================================================
-     CONFIGURATION
+     CONFIG
   ====================================================== */
 
   if (!window.PROTRACK_CONFIG) {
@@ -432,57 +425,29 @@
         padding:30px;
         font-family:Arial;
       ">
+
         <h2>Configuration Error</h2>
 
         <p>
           config.js could not be loaded.
         </p>
 
-        <p>
-          Make sure <strong>config.js</strong> is in the
-          same GitHub folder as <strong>driver.html</strong>.
-        </p>
       </div>
     `;
 
     throw new Error(
-      "PROTRACK_CONFIG is missing"
+      "PROTRACK_CONFIG missing"
     );
   }
 
 
-  const config = window.PROTRACK_CONFIG;
+  const config =
+    window.PROTRACK_CONFIG;
 
 
   /* =====================================================
      SUPABASE
   ====================================================== */
-
-  if (
-    !config.supabaseUrl ||
-    !config.supabaseKey
-  ) {
-
-    document.body.innerHTML = `
-      <div style="
-        max-width:600px;
-        margin:80px auto;
-        padding:30px;
-        font-family:Arial;
-      ">
-        <h2>Configuration Error</h2>
-
-        <p>
-          Supabase configuration is incomplete.
-        </p>
-      </div>
-    `;
-
-    throw new Error(
-      "Supabase configuration incomplete"
-    );
-  }
-
 
   const supabaseClient =
     window.supabase.createClient(
@@ -496,6 +461,7 @@
   ====================================================== */
 
   let currentUser = null;
+
   let currentProfile = null;
 
   let realtimeChannels = [];
@@ -595,7 +561,8 @@
       return "—";
     }
 
-    const date = new Date(value);
+    const date =
+      new Date(value);
 
     return date.toLocaleString([], {
 
@@ -619,7 +586,8 @@
         "loginError"
       );
 
-    box.textContent = message;
+    box.textContent =
+      message;
 
     box.classList.remove(
       "hidden"
@@ -665,43 +633,6 @@
       box.innerHTML = "";
 
     }, 4000);
-
-  }
-
-
-  function getTodayRange() {
-
-    const now = new Date();
-
-    const start =
-      new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        0,
-        0,
-        0
-      );
-
-    const end =
-      new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        23,
-        59,
-        59
-      );
-
-    return {
-
-      start:
-        start.toISOString(),
-
-      end:
-        end.toISOString()
-
-    };
 
   }
 
@@ -807,23 +738,9 @@
     }
 
 
-    currentProfile = data;
+    currentProfile =
+      data;
 
-
-    /*
-      DRIVER ACCESS
-
-      A user can enter the Driver App if:
-
-      1. Their role is "driver"
-
-      OR
-
-      2. Their driver_access value is true
-
-      This allows your existing manager account
-      to use BOTH applications.
-    */
 
     const role =
       String(
@@ -855,23 +772,9 @@
       currentProfile
     );
 
-    console.log(
-      "Role:",
-      role
-    );
 
     console.log(
       "Driver access:",
-      driverAccess
-    );
-
-    console.log(
-      "Active:",
-      isActive
-    );
-
-    console.log(
-      "Has driver access:",
       hasDriverAccess
     );
 
@@ -889,18 +792,18 @@
     }
 
 
-    /*
-      ACCESS GRANTED
-    */
-
     document
       .getElementById("loginScreen")
-      .classList.add("hidden");
+      .classList.add(
+        "hidden"
+      );
 
 
     document
       .getElementById("app")
-      .classList.remove("hidden");
+      .classList.remove(
+        "hidden"
+      );
 
 
     document
@@ -926,14 +829,13 @@
 
     await loadTrips();
 
-
     subscribeToRealtime();
 
   }
 
 
   /* =====================================================
-     LOAD TRIPS
+     LOAD TODAY'S TRIPS
   ====================================================== */
 
   async function loadTrips() {
@@ -951,12 +853,13 @@
     `;
 
 
-    const {
-      start,
-      end
-    } =
-      getTodayRange();
+    /*
+      We load assignments belonging to
+      the logged-in driver.
 
+      Then we load the exact columns
+      that exist in your trips table.
+    */
 
     const {
       data: assignments,
@@ -974,11 +877,11 @@
             booking_reference,
             scheduled_at,
             pickup_location,
-            destination,
-            passengers,
+            destination_location,
+            passengers:passenger_count,
             price,
             payment_status,
-            collect_on_return,
+            collect_on_return:payment_due_on_return,
             special_instructions,
             status
           )
@@ -992,22 +895,60 @@
     if (error) {
 
       console.error(
-        "Trips error:",
+        "Trip loading error:",
         error
       );
 
       list.innerHTML = `
+
         <div class="error">
-          Unable to load your trips.
+
+          <strong>
+            Unable to load your trips.
+          </strong>
+
           <br><br>
+
           ${escapeHtml(
             error.message
           )}
+
         </div>
+
       `;
 
       return;
     }
+
+
+    /*
+      Only display today's trips.
+    */
+
+    const now =
+      new Date();
+
+
+    const start =
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0,
+        0,
+        0
+      );
+
+
+    const end =
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        23,
+        59,
+        59
+      );
 
 
     const trips =
@@ -1018,6 +959,7 @@
             return false;
           }
 
+
           const scheduled =
             new Date(
               item.trips.scheduled_at
@@ -1025,10 +967,8 @@
 
 
           return (
-            scheduled >=
-              new Date(start) &&
-            scheduled <=
-              new Date(end)
+            scheduled >= start &&
+            scheduled <= end
           );
 
         })
@@ -1049,6 +989,7 @@
     if (!trips.length) {
 
       list.innerHTML = `
+
         <div class="empty">
 
           <h3>
@@ -1061,6 +1002,7 @@
           </p>
 
         </div>
+
       `;
 
       return;
@@ -1092,7 +1034,8 @@
 
 
     const statusClass =
-      "status-" + status;
+      "status-" +
+      status;
 
 
     let actionButtons = "";
@@ -1317,7 +1260,7 @@
             <div class="location-value">
 
               ${escapeHtml(
-                trip.destination
+                trip.destination_location
               )}
 
             </div>
@@ -1382,7 +1325,8 @@
           ${
             trip.collect_on_return
               ? `
-                <br>
+                <br><br>
+
                 <strong>
                   ⚠ Collect payment
                   on return trip
@@ -1435,7 +1379,7 @@
 
 
   /* =====================================================
-     UPDATE STATUS
+     UPDATE TRIP STATUS
   ====================================================== */
 
   async function updateTripStatus(
@@ -1458,20 +1402,20 @@
 
 
     const {
-      data,
       error
     } =
       await supabaseClient
         .from("trips")
         .update({
-          status: newStatus
+
+          status:
+            newStatus
+
         })
         .eq(
           "id",
           tripId
-        )
-        .select()
-        .single();
+        );
 
 
     if (error) {
@@ -1492,7 +1436,7 @@
 
 
     /*
-      Record status history.
+      Record the status change.
     */
 
     const {
@@ -1528,8 +1472,8 @@
 
 
     /*
-      Completed trips also complete
-      the driver's assignment.
+      Mark assignment completed
+      when the trip is completed.
     */
 
     if (
@@ -1575,7 +1519,9 @@
 
     showMessage(
       "Trip updated to " +
-      formatStatus(newStatus) +
+      formatStatus(
+        newStatus
+      ) +
       "."
     );
 
@@ -1706,6 +1652,7 @@
 
 
     currentUser = null;
+
     currentProfile = null;
 
 
