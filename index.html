@@ -203,16 +203,37 @@ function drivers(){
 }
 function driverForm(d={}){
  const isNew=!d.id;
- openModal(isNew?'Add Driver':'Edit Driver',`${isNew?`<div class="field"><label>Supabase Auth User ID</label><input id="d_id" placeholder="Paste the driver's Auth User UID"></div><div class="notice">For a new driver, the profile ID must match that driver's Supabase Auth User ID. Create the Auth user first in Supabase Authentication, then paste the user's UID here.</div>`:''}<div class="grid2"><div class="field"><label>Full name</label><input id="d_name" value="${esc(d.full_name)}"></div><div class="field"><label>Phone</label><input id="d_phone" value="${esc(d.phone)}"></div><div class="field"><label>Role</label><select id="d_role">${['driver','dispatcher','manager','admin'].map(x=>`<option ${d.role===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Driver access</label><select id="d_access"><option value="false" ${!d.driver_access?'selected':''}>No</option><option value="true" ${d.driver_access?'selected':''}>Yes</option></select></div></div><div class="form-actions"><button class="primary" onclick="saveDriver('${d.id||''}')">Save Driver</button></div>`);
+ openModal(isNew?'Add Driver':'Edit Driver',`${isNew?`<div class="notice"><b>Create driver account directly from ProTrack.</b><br>Enter the driver's email and a temporary password. ProTrack will create the Supabase login and the matching driver profile automatically.</div><div class="field"><label>Login email</label><input id="d_email" type="email" autocomplete="off" placeholder="driver@example.com"></div><div class="field"><label>Temporary password</label><input id="d_password" type="password" autocomplete="new-password" placeholder="At least 8 characters"></div>`:''}<div class="grid2"><div class="field"><label>Full name</label><input id="d_name" value="${esc(d.full_name)}"></div><div class="field"><label>Phone</label><input id="d_phone" value="${esc(d.phone)}"></div><div class="field"><label>Role</label><select id="d_role">${['driver','dispatcher','manager','admin'].map(x=>`<option ${d.role===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Driver access</label><select id="d_access"><option value="false" ${!d.driver_access?'selected':''}>No</option><option value="true" ${d.driver_access?'selected':''}>Yes</option></select></div></div><div class="form-actions"><button class="primary" onclick="saveDriver('${d.id||''}')">${isNew?'Create Driver':'Save Driver'}</button></div>`);
 }
 async function saveDriver(existingId){
- const id=existingId||document.getElementById('d_id').value.trim();
- if(!id){alert('Enter the Supabase Auth User ID for this driver.');return}
- const payload={id,full_name:document.getElementById('d_name').value.trim(),phone:document.getElementById('d_phone').value.trim(),role:document.getElementById('d_role').value,driver_access:document.getElementById('d_access').value==='true',active:true};
- if(!payload.full_name){alert('Enter the driver name.');return}
- const r=existingId?await sb.from('profiles').update({...payload,id:undefined}).eq('id',existingId):await sb.from('profiles').insert(payload);
- if(r.error){alert(r.error.message);return}
- closeModal();showPage('drivers');
+ const name=document.getElementById('d_name').value.trim();
+ const phone=document.getElementById('d_phone').value.trim();
+ const role=document.getElementById('d_role').value;
+ const driver_access=document.getElementById('d_access').value==='true';
+ if(!name){alert('Enter the driver name.');return}
+ if(existingId){
+   const r=await sb.from('profiles').update({full_name:name,phone,role,driver_access,active:true}).eq('id',existingId);
+   if(r.error){alert(r.error.message);return}
+   closeModal();showPage('drivers');
+   return;
+ }
+ const email=document.getElementById('d_email').value.trim();
+ const password=document.getElementById('d_password').value;
+ if(!email){alert('Enter the driver email address.');return}
+ if(password.length<8){alert('Use a temporary password with at least 8 characters.');return}
+ const button=document.querySelector('#modalBody .primary');
+ if(button){button.disabled=true;button.textContent='Creating…'}
+ const {data,error}=await sb.functions.invoke('create-driver',{body:{email,password,full_name:name,phone,role,driver_access}});
+ if(error){
+   let message=error.message||'Could not create driver.';
+   try{if(error.context){const body=await error.context.json();if(body?.error)message=body.error}}catch(_){}
+   alert(message);
+   if(button){button.disabled=false;button.textContent='Create Driver'}
+   return;
+ }
+ closeModal();
+ alert(`Driver ${name} was created successfully.\n\nLogin email: ${email}`);
+ showPage('drivers');
 }
 function guests(){
  simpleList('guest_profiles',{title:'Guests',select:'*,properties(name)',order:'created_at',headers:['Guest','Contact','Property','Room','Stay','Active','Actions'],form:'guestForm',row:g=>`<tr><td><b>${esc(g.full_name)}</b></td><td>${esc(g.phone||g.email||'—')}</td><td>${esc(g.properties?.name||'—')}</td><td>${esc(g.room_number||'—')}</td><td>${dateOnly(g.check_in)} → ${dateOnly(g.check_out)}</td><td>${badge(g.active?'active':'inactive')}</td><td><button class="secondary" onclick='guestForm(${JSON.stringify(g)})'>Edit</button></td></tr>`});
