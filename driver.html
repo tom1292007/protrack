@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProTrack Driver</title>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#f4f7fb;--panel:#fff;--ink:#172033;--muted:#718096;--line:#e3e8ef;--blue:#1456d9;--green:#14834d;--red:#bd3030;--orange:#a86600}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px system-ui,-apple-system,Segoe UI,sans-serif}.hidden{display:none!important}
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}.login-card{width:min(420px,100%);background:#fff;border:1px solid var(--line);padding:26px;border-radius:18px;box-shadow:0 15px 50px #102b5012}.logo{font-size:27px;font-weight:850}.muted{color:var(--muted)}.field{margin:12px 0}.field label{display:block;font-weight:700;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid #d6dde7;border-radius:10px;background:#fff}.field textarea{min-height:80px}
+button{border:0;cursor:pointer;font:inherit}.primary{background:var(--blue);color:#fff;padding:11px 14px;border-radius:10px;font-weight:750}.secondary{background:#edf2f8;color:#27364b;padding:9px 12px;border-radius:9px;font-weight:700}.danger{background:#ffecec;color:var(--red);padding:9px 12px;border-radius:9px;font-weight:700}.success{background:#e8f7ef;color:var(--green);padding:9px 12px;border-radius:9px;font-weight:700}
+.app{max-width:850px;margin:auto;padding:15px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.top h1{margin:0;font-size:24px}.top-right{display:flex;gap:7px}.pill{background:#fff;border:1px solid var(--line);padding:8px 10px;border-radius:9px}
+.tabs{display:flex;gap:7px;overflow:auto;margin-bottom:13px}.tabs button{white-space:nowrap;background:#e9eef5;padding:9px 12px;border-radius:9px;font-weight:750}.tabs button.active{background:#173f87;color:#fff}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}.trip-head{display:flex;justify-content:space-between;gap:12px}.ref{font-size:12px;color:var(--muted)}.route{font-size:18px;font-weight:800;margin:10px 0}.meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.meta div{background:#f7f9fc;padding:9px;border-radius:9px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.status{padding:5px 9px;border-radius:999px;background:#edf2f8;font-size:11px;font-weight:800}.status.ok{background:#e7f7ef;color:#13784a}.status.warn{background:#fff2dd;color:#996000}.status.bad{background:#ffe9e9;color:#ad2929}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.section-title{font-weight:800;font-size:17px;margin:3px 0 12px}.notice{padding:10px;border-radius:9px;background:#eef5ff;color:#28518b;margin:10px 0}.error{background:#fff0f0;color:#b52c2c}.empty{text-align:center;padding:35px 10px;color:var(--muted)}
+.modal{position:fixed;inset:0;background:#07111d88;display:grid;place-items:center;padding:15px;z-index:10}.modal-card{width:min(520px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;padding:18px}.modal-head{display:flex;justify-content:space-between;align-items:center}.x{background:#edf2f8;padding:6px 10px;border-radius:8px}.form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{background:#fff;border:1px solid var(--line);padding:13px;border-radius:12px}.metric b{font-size:20px;display:block;margin-top:3px}
+@media(max-width:600px){.meta,.grid2{grid-template-columns:1fr}.metric-grid{grid-template-columns:1fr 1fr}.top{align-items:flex-start}}
+</style>
+</head>
+<body>
+<div id="login" class="login"><div class="login-card"><div class="logo">ProTrack Driver</div><div class="muted">Sign in with your ProTrack account</div><div id="loginMsg"></div><div class="field"><label>Email</label><input id="email" type="email"></div><div class="field"><label>Password</label><input id="password" type="password"></div><button class="primary" style="width:100%" onclick="login()">Sign in</button></div></div>
+
+<div id="app" class="app hidden">
+<div class="top"><div><h1>Driver</h1><div class="muted" id="driverName"></div></div><div class="top-right"><button class="secondary" onclick="logout()">Sign out</button></div></div>
+<div id="gpsStatus" class="notice">📍 Location sharing: <b>Starting…</b></div>
+<div class="tabs"><button id="tabTrips" onclick="tab('trips')">Trips</button><button id="tabCash" onclick="tab('cash')">Cash</button><button id="tabPayments" onclick="tab('payments')">Payments</button></div>
+<div id="content"></div>
+</div>
+<div id="modal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h2 id="modalTitle"></h2><button class="x" onclick="closeModal()">✕</button></div><div id="modalBody"></div></div></div>
+<script>
+const cfg=window.PROTRACK_CONFIG||{};const sb=supabase.createClient(cfg.supabaseUrl,cfg.supabaseKey);
+let user=null,profile=null,currentTab='trips',trips=[],gpsWatchId=null,gpsLastSent=0;
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const money=v=>'$'+Number(v||0).toFixed(2),fmt=v=>v?new Date(v).toLocaleString([], {dateStyle:'short',timeStyle:'short'}):'—';
+const badge=s=>`<span class="status ${['completed','paid','accepted'].includes(s)?'ok':['scheduled','assigned','collect_on_return','partial'].includes(s)?'warn':['cancelled','unpaid','rejected'].includes(s)?'bad':''}">${esc(s||'—')}</span>`;
+function notice(t,e=false){return `<div class="notice ${e?'error':''}">${esc(t)}</div>`}
+async function init(){const {data:{session}}=await sb.auth.getSession();if(session)boot(session.user)}
+window.addEventListener('beforeunload',()=>{if(gpsWatchId!==null)navigator.geolocation.clearWatch(gpsWatchId)});
+async function login(){const {data,error}=await sb.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});if(error){document.getElementById('loginMsg').innerHTML=notice(error.message,true);return}boot(data.user)}
+async function boot(u){
+ user=u;const {data:p,error}=await sb.from('profiles').select('*').eq('id',u.id).maybeSingle();
+ if(error||!p){document.getElementById('loginMsg').innerHTML=notice('No ProTrack profile found.',true);await sb.auth.signOut();return}
+ if(!p.active||!(p.role==='driver'||p.driver_access===true)){document.getElementById('loginMsg').innerHTML=notice('This account does not have driver access.',true);await sb.auth.signOut();return}
+ profile=p;document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden');document.getElementById('driverName').textContent=p.full_name||u.email;startGps();tab('trips');
+}
+async function logout(){await sb.auth.signOut();location.reload()}
+async function sendGps(pos){
+ const c=pos.coords; const payload={driver_id:user.id,latitude:c.latitude,longitude:c.longitude,accuracy:c.accuracy??null,speed:c.speed??null,heading:c.heading??null,last_seen_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+ const r=await sb.from('driver_locations').upsert(payload,{onConflict:'driver_id'});
+ if(r.error)document.getElementById('gpsStatus').innerHTML=`📍 Location sharing: <b style="color:#bd3030">Error</b><br><span class="muted">${esc(r.error.message)}</span>`; else {gpsLastSent=Date.now();document.getElementById('gpsStatus').innerHTML=`📍 Location sharing: <b style="color:#14834d">ON</b> · Updated ${new Date().toLocaleTimeString()}`;}
+}
+function startGps(){
+ if(!navigator.geolocation){document.getElementById('gpsStatus').innerHTML='📍 Location sharing: <b style="color:#bd3030">Not supported by this browser</b>';return}
+ if(gpsWatchId!==null)navigator.geolocation.clearWatch(gpsWatchId);
+ document.getElementById('gpsStatus').innerHTML='📍 Location sharing: <b>Requesting permission…</b>';
+ gpsWatchId=navigator.geolocation.watchPosition(sendGps,(err)=>{document.getElementById('gpsStatus').innerHTML=`📍 Location sharing: <b style="color:#bd3030">${esc(err.message)}</b>`},{enableHighAccuracy:true,maximumAge:10000,timeout:20000});
+}
+function tab(t){currentTab=t;document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));document.getElementById('tab'+t[0].toUpperCase()+t.slice(1)).classList.add('active');({trips:loadTrips,cash:loadCash,payments:loadPayments})[t]()}
+function openModal(t,b){document.getElementById('modalTitle').textContent=t;document.getElementById('modalBody').innerHTML=b;document.getElementById('modal').classList.remove('hidden')}function closeModal(){document.getElementById('modal').classList.add('hidden')}
+async function loadTrips(){
+ const {data,error}=await sb.from('trip_assignments').select(`id,trip_id,driver_id,assignment_status,assigned_at,accepted_at,completed_at,trips(id,booking_reference,scheduled_at,pickup_location,destination_location,passenger_count,price,payment_status,payment_due_on_return,special_instructions,status)`).eq('driver_id',user.id);
+ if(error){document.getElementById('content').innerHTML=notice(error.message,true);return}
+ trips=(data||[]).filter(x=>x.trips).sort((a,b)=>new Date(a.trips.scheduled_at)-new Date(b.trips.scheduled_at));
+ const today=new Date();const day=today.toDateString();const todayTrips=trips.filter(x=>new Date(x.trips.scheduled_at).toDateString()===day);
+ document.getElementById('content').innerHTML=`<div class="metric-grid"><div class="metric"><span class="muted">Today</span><b>${todayTrips.length}</b></div><div class="metric"><span class="muted">Completed</span><b>${todayTrips.filter(x=>x.trips.status==='completed').length}</b></div><div class="metric"><span class="muted">Collections</span><b id="todayCollected">$0.00</b></div></div><div style="height:10px"></div>${todayTrips.length?todayTrips.map(renderTrip).join(''):'<div class="card empty">No assigned trips for today.</div>'}`;
+ updateCollected();
+}
+function renderTrip(a){
+ const t=a.trips;const status=t.status;let buttons='';
+ if(status==='assigned')buttons=`<button class="primary" onclick="acceptTrip('${a.id}','${t.id}')">Accept Trip</button>`;
+ else if(status==='accepted')buttons=`<button class="primary" onclick="setTrip('${a.id}','${t.id}','en_route')">Start / En Route</button>`;
+ else if(status==='en_route')buttons=`<button class="primary" onclick="setTrip('${a.id}','${t.id}','arrived')">Arrived</button>`;
+ else if(status==='arrived')buttons=`<button class="primary" onclick="setTrip('${a.id}','${t.id}','passenger_onboard')">Passenger Onboard</button>`;
+ else if(status==='passenger_onboard')buttons=`<button class="primary" onclick="completeTrip('${a.id}','${t.id}')">Complete Trip</button>`;
+ if(status!=='cancelled'&&status!=='completed')buttons+=`<button class="secondary" onclick="paymentForm('${t.id}',${Number(t.price||0)},${t.payment_due_on_return})">Collect Payment</button>`;
+ if(t.payment_due_on_return)buttons+=`<button class="secondary" onclick="outstandingForm('${t.id}')">Return / Outstanding</button>`;
+ return `<div class="card"><div class="trip-head"><div><div class="ref">${esc(t.booking_reference)}</div><div style="font-weight:800">${fmt(t.scheduled_at)}</div></div>${badge(status)}</div><div class="route">${esc(t.pickup_location)} → ${esc(t.destination_location)}</div><div class="meta"><div><span class="muted">Passengers</span><br><b>${t.passenger_count}</b></div><div><span class="muted">Trip value</span><br><b>${money(t.price)}</b></div><div><span class="muted">Payment</span><br>${badge(t.payment_status)}</div><div><span class="muted">Return collection</span><br><b>${t.payment_due_on_return?'Required':'No'}</b></div></div>${t.special_instructions?`<div class="notice"><b>Instructions:</b> ${esc(t.special_instructions)}</div>`:''}<div class="actions">${buttons}</div></div>`;
+}
+async function acceptTrip(aid,tid){const a=await sb.from('trip_assignments').update({assignment_status:'accepted',accepted_at:new Date().toISOString()}).eq('id',aid);if(a.error){alert(a.error.message);return}const t=await sb.from('trips').update({status:'accepted'}).eq('id',tid);if(t.error)alert(t.error.message);else await history(tid,'accepted');loadTrips()}
+async function setTrip(aid,tid,status){const r=await sb.from('trips').update({status}).eq('id',tid);if(r.error){alert(r.error.message);return}await history(tid,status);loadTrips()}
+async function completeTrip(aid,tid){const r=await sb.from('trips').update({status:'completed'}).eq('id',tid);if(r.error){alert(r.error.message);return}await sb.from('trip_assignments').update({assignment_status:'completed',completed_at:new Date().toISOString()}).eq('id',aid);await history(tid,'completed');loadTrips()}
+async function history(tid,status){await sb.from('trip_status_history').insert({trip_id:tid,status,changed_by:user.id})}
+async function paymentForm(tid,max,dueReturn){
+ openModal('Collect Payment',`<div class="notice">Record only the amount actually received from the guest.</div><div class="field"><label>Amount</label><input id="pay_amount" type="number" step=".01" value="${max}"></div><div class="field"><label>Method</label><select id="pay_method"><option value="cash">Cash</option><option value="card">Card</option><option value="other">Other</option></select></div><div class="field"><label>Notes / reference</label><textarea id="pay_notes"></textarea></div><div class="form-actions"><button class="primary" onclick="collectPayment('${tid}',${max})">Record Payment</button></div>`);
+}
+async function collectPayment(tid,max){const amount=Number(document.getElementById('pay_amount').value||0),method=document.getElementById('pay_method').value,notes=document.getElementById('pay_notes').value;if(amount<=0){alert('Enter an amount greater than zero.');return}
+ const p=await sb.from('payments').insert({trip_id:tid,amount,payment_method:method,collected_by:user.id,notes}).select('id').single();if(p.error){alert(p.error.message);return}
+ if(method==='cash')await addCash(tid,amount,'trip_collection','Trip payment');
+ await syncTripPayment(tid);closeModal();loadTrips();
+}
+async function outstandingForm(tid){
+ const {data:o}=await sb.from('outstanding_payments').select('*').eq('trip_id',tid).maybeSingle();const due=o?Math.max(0,Number(o.amount_due)-Number(o.amount_collected)):0;
+ openModal('Return / Outstanding Payment',`<div class="notice">Balance due: <b>${money(due)}</b></div><div class="field"><label>Amount collected</label><input id="out_amount" type="number" step=".01" value="${due}"></div><div class="field"><label>Method</label><select id="out_method"><option value="cash">Cash</option><option value="card">Card</option><option value="other">Other</option></select></div><div class="field"><label>Notes</label><textarea id="out_notes"></textarea></div><div class="form-actions"><button class="primary" onclick="collectOutstanding('${tid}',${due})">Record Collection</button></div>`);
+}
+async function collectOutstanding(tid,due){const amount=Number(document.getElementById('out_amount').value||0),method=document.getElementById('out_method').value,notes=document.getElementById('out_notes').value;if(amount<=0)return alert('Enter an amount greater than zero.');
+ const p=await sb.from('payments').insert({trip_id:tid,amount,payment_method:method,collected_by:user.id,notes:'Outstanding/return: '+notes});if(p.error){alert(p.error.message);return}
+ const {data:o}=await sb.from('outstanding_payments').select('*').eq('trip_id',tid).maybeSingle();if(o){const collected=Number(o.amount_collected||0)+amount;await sb.from('outstanding_payments').update({amount_collected:collected,status:collected>=Number(o.amount_due)?'paid':'partial'}).eq('id',o.id)}
+ if(method==='cash')await addCash(tid,amount,'trip_collection','Outstanding/return payment');await syncTripPayment(tid);closeModal();loadTrips();
+}
+async function syncTripPayment(tid){const {data:ps}=await sb.from('payments').select('amount').eq('trip_id',tid);const total=(ps||[]).reduce((a,x)=>a+Number(x.amount||0),0);const {data:t}=await sb.from('trips').select('price').eq('id',tid).single();if(t){const status=total>=Number(t.price||0)?'paid':total>0?'partial':'unpaid';await sb.from('trips').update({payment_status:status}).eq('id',tid)}}
+async function getSession(){
+ let {data:s}=await sb.from('cash_sessions').select('*').eq('driver_id',user.id).eq('business_date',new Date().toISOString().slice(0,10)).maybeSingle();return s;
+}
+async function loadCash(){
+ const s=await getSession();const {data:tx}=s?await sb.from('cash_transactions').select('*').eq('cash_session_id',s.id).order('created_at',{ascending:false}):{data:[]};
+ const total=(tx||[]).reduce((a,x)=>a+Number(x.amount||0),0),expected=s?Number(s.opening_cash||0)+total:0;
+ document.getElementById('content').innerHTML=`<div class="metric-grid"><div class="metric"><span class="muted">Opening</span><b>${money(s?.opening_cash)}</b></div><div class="metric"><span class="muted">Expected closing</span><b>${money(expected)}</b></div><div class="metric"><span class="muted">Variance</span><b>${money(s?.variance)}</b></div></div><div style="height:10px"></div><div class="card">${s?`<div class="section-title">Today’s Cash Session</div><div class="muted">Opened ${fmt(s.opened_at)}</div><div class="actions">${s.closed_at?'<span class="status ok">Closed</span>':`<button class="success" onclick="closeCash('${s.id}',${expected})">Close Cash</button>`}<button class="secondary" onclick="expenseForm('${s.id}')">Add Expense</button></div>`:`<div class="section-title">Open Today’s Cash</div><div class="field"><label>Opening cash</label><input id="opening_cash" type="number" step=".01" value="0"></div><button class="primary" onclick="openCash()">Open Cash Session</button>`}</div><div class="card"><div class="section-title">Cash Transactions</div>${(tx||[]).length?(tx||[]).map(x=>`<div style="display:flex;justify-content:space-between;border-bottom:1px solid #edf0f4;padding:10px 0"><div><b>${esc(x.type)}</b><div class="muted">${esc(x.description||'')}</div></div><b>${money(x.amount)}</b></div>`).join(''):'<div class="empty">No cash transactions yet.</div>'}</div>`;
+}
+async function openCash(){const amount=Number(document.getElementById('opening_cash').value||0);const r=await sb.from('cash_sessions').insert({driver_id:user.id,business_date:new Date().toISOString().slice(0,10),opening_cash:amount}).select('id').single();if(r.error)alert(r.error.message);else{await sb.from('cash_transactions').insert({cash_session_id:r.data.id,driver_id:user.id,type:'opening',amount,description:'Opening cash'});loadCash()}}
+async function addCash(tid,amount,type,description){const s=await getSession();if(!s){alert('Please open your cash session before recording a cash collection.');return}await sb.from('cash_transactions').insert({cash_session_id:s.id,driver_id:user.id,trip_id:tid,type,amount,description})}
+async function closeCash(id,expected){openModal('Close Cash',`<div class="notice">Expected cash: <b>${money(expected)}</b></div><div class="field"><label>Actual cash counted</label><input id="actual_cash" type="number" step=".01" value="${expected.toFixed(2)}"></div><div class="field"><label>Notes</label><textarea id="close_notes"></textarea></div><div class="form-actions"><button class="primary" onclick="finishClose('${id}',${expected})">Close Session</button></div>`)}
+async function finishClose(id,expected){const actual=Number(document.getElementById('actual_cash').value||0),variance=actual-expected,notes=document.getElementById('close_notes').value;const r=await sb.from('cash_sessions').update({declared_closing_cash:actual,expected_closing_cash:expected,variance,closed_at:new Date().toISOString(),notes}).eq('id',id);if(r.error)alert(r.error.message);else{await sb.from('cash_transactions').insert({cash_session_id:id,driver_id:user.id,type:'closing',amount:actual,description:'Declared closing cash'});closeModal();loadCash()}}
+async function expenseForm(sessionId){openModal('Add Expense',`<div class="grid2"><div class="field"><label>Amount</label><input id="ex_amount" type="number" step=".01"></div><div class="field"><label>Category</label><select id="ex_cat"><option>Fuel</option><option>Parking</option><option>Tolls</option><option>Supplies</option><option>Other</option></select></div></div><div class="field"><label>Description</label><textarea id="ex_desc"></textarea></div><div class="form-actions"><button class="primary" onclick="addExpense('${sessionId}')">Save Expense</button></div>`)}
+async function addExpense(sessionId){const amount=Number(document.getElementById('ex_amount').value||0),category=document.getElementById('ex_cat').value,description=document.getElementById('ex_desc').value;if(amount<=0)return alert('Enter an amount.');const r=await sb.from('expenses').insert({driver_id:user.id,cash_session_id:sessionId,amount,category,description});if(r.error){alert(r.error.message);return}await sb.from('cash_transactions').insert({cash_session_id:sessionId,driver_id:user.id,type:'expense',amount:-amount,description:category+': '+description});closeModal();loadCash()}
+async function loadPayments(){const {data,error}=await sb.from('payments').select('*').eq('collected_by',user.id).order('collected_at',{ascending:false});if(error){document.getElementById('content').innerHTML=notice(error.message,true);return}const total=(data||[]).reduce((a,x)=>a+Number(x.amount||0),0);document.getElementById('content').innerHTML=`<div class="metric-grid"><div class="metric"><span class="muted">Payments</span><b>${(data||[]).length}</b></div><div class="metric"><span class="muted">Collected</span><b>${money(total)}</b></div><div class="metric"><span class="muted">Today</span><b>${money((data||[]).filter(x=>new Date(x.collected_at).toDateString()===new Date().toDateString()).reduce((a,x)=>a+Number(x.amount||0),0))}</b></div></div><div style="height:10px"></div><div class="card"><div class="section-title">Collection History</div>${(data||[]).length?(data||[]).map(p=>`<div style="padding:10px 0;border-bottom:1px solid #edf0f4;display:flex;justify-content:space-between"><div><b>${esc(p.payment_method)}</b><div class="muted">${fmt(p.collected_at)} · ${esc(p.notes||'')}</div></div><b>${money(p.amount)}</b></div>`).join(''):'<div class="empty">No payments collected yet.</div>'}</div>`;updateCollected()}
+async function updateCollected(){const {data}=await sb.from('payments').select('amount,collected_at').eq('collected_by',user.id);const total=(data||[]).filter(x=>new Date(x.collected_at).toDateString()===new Date().toDateString()).reduce((a,x)=>a+Number(x.amount||0),0);const el=document.getElementById('todayCollected');if(el)el.textContent=money(total)}
+sb.auth.onAuthStateChange((e)=>{if(e==='SIGNED_OUT')location.reload()});init();
+</script>
+</body>
+</html>
