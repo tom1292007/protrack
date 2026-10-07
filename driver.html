@@ -7,10 +7,8 @@
   <title>ProTrack Driver</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
 
   <style>
-
     * {
       box-sizing: border-box;
     }
@@ -18,14 +16,14 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f3f4f6;
-      color: #111827;
+      background: #f4f6f8;
+      color: #1f2937;
     }
 
     header {
       background: #111827;
       color: white;
-      padding: 15px 18px;
+      padding: 18px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -34,1267 +32,1337 @@
       z-index: 10;
     }
 
-    .logo {
+    header h1 {
+      margin: 0;
       font-size: 20px;
-      font-weight: bold;
     }
 
-    .subtitle {
-      font-size: 12px;
-      opacity: .7;
-      margin-top: 3px;
-    }
-
-    main {
-      max-width: 850px;
-      margin: auto;
-      padding: 15px;
-    }
-
-    .card {
-      background: white;
-      border-radius: 14px;
-      padding: 17px;
-      margin-bottom: 14px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.05);
-    }
-
-    .login {
-      max-width: 430px;
-      margin: 60px auto;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 9px;
-      margin: 6px 0 14px;
-      font-size: 16px;
-    }
-
-    label {
-      font-size: 12px;
-      font-weight: bold;
+    header small {
+      display: block;
+      margin-top: 4px;
+      color: #9ca3af;
     }
 
     button {
       border: none;
-      border-radius: 9px;
-      padding: 11px 14px;
-      background: #111827;
-      color: white;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
       font-weight: bold;
       cursor: pointer;
-      font-size: 14px;
     }
 
-    button:hover {
-      opacity: .9;
+    .logout-btn {
+      background: #374151;
+      color: white;
     }
 
-    .blue {
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .login-box {
+      max-width: 420px;
+      margin: 80px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .login-box h2 {
+      margin-top: 0;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      margin-bottom: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    .login-btn {
+      width: 100%;
       background: #2563eb;
-    }
-
-    .green {
-      background: #047857;
-    }
-
-    .gray {
-      background: #e5e7eb;
-      color: #111827;
+      color: white;
     }
 
     .hidden {
       display: none !important;
     }
 
-    .error {
-      color: #b91c1c;
-      margin-top: 10px;
+    .top-card {
+      background: white;
+      padding: 18px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
 
-    .success {
-      color: #047857;
-      margin-top: 10px;
+    .top-card h2 {
+      margin: 0 0 6px;
     }
 
-    .muted {
+    .date {
       color: #6b7280;
+      font-size: 14px;
     }
 
-    .trip {
-      border: 1px solid #e5e7eb;
+    .trip-card {
+      background: white;
       border-radius: 14px;
-      padding: 16px;
-      margin-top: 12px;
+      margin-bottom: 18px;
+      padding: 20px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+    }
+
+    .trip-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      align-items: flex-start;
+      margin-bottom: 15px;
+    }
+
+    .booking-ref {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 5px;
     }
 
     .trip-time {
-      font-size: 27px;
+      font-size: 20px;
       font-weight: bold;
     }
 
-    .booking {
-      color: #6b7280;
-      font-size: 13px;
-      margin-top: 3px;
+    .status {
+      padding: 7px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      white-space: nowrap;
+      background: #e5e7eb;
+    }
+
+    .status-assigned {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .status-accepted {
+      background: #ede9fe;
+      color: #6d28d9;
+    }
+
+    .status-en_route {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-arrived {
+      background: #cffafe;
+      color: #155e75;
+    }
+
+    .status-passenger_onboard {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-completed {
+      background: #d1fae5;
+      color: #065f46;
     }
 
     .route {
-      font-size: 20px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin: 15px 0;
+    }
+
+    .location {
+      padding: 14px;
+      background: #f9fafb;
+      border-radius: 9px;
+    }
+
+    .location-label {
+      font-size: 11px;
+      color: #6b7280;
+      text-transform: uppercase;
       font-weight: bold;
-      margin: 14px 0;
+      margin-bottom: 5px;
+    }
+
+    .location-value {
+      font-size: 16px;
+      font-weight: 600;
     }
 
     .details {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 9px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 15px;
     }
 
     .detail {
       background: #f9fafb;
-      border-radius: 9px;
-      padding: 11px;
+      padding: 12px;
+      border-radius: 8px;
     }
 
     .detail-label {
       color: #6b7280;
       font-size: 11px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
     }
 
     .detail-value {
       font-weight: bold;
-      margin-top: 4px;
-    }
-
-    .status {
-      display: inline-block;
-      padding: 6px 10px;
-      border-radius: 20px;
-      background: #eef2ff;
-      font-size: 12px;
-      font-weight: bold;
-      margin-top: 10px;
     }
 
     .instructions {
-      background: #f9fafb;
+      margin-top: 15px;
+      padding: 14px;
+      background: #fff7ed;
       border-radius: 9px;
-      padding: 12px;
-      margin-top: 12px;
+      border-left: 4px solid #f97316;
+    }
+
+    .payment {
+      margin-top: 15px;
+      padding: 14px;
+      background: #f0fdf4;
+      border-radius: 9px;
+    }
+
+    .payment.unpaid {
+      background: #fef2f2;
+    }
+
+    .payment.return {
+      background: #fff7ed;
     }
 
     .actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 14px;
+      gap: 10px;
+      margin-top: 18px;
     }
 
-    @media(max-width:500px) {
+    .action-btn {
+      width: 100%;
+      color: white;
+      background: #2563eb;
+      font-size: 15px;
+      padding: 14px;
+    }
 
-      .details,
-      .actions {
-        grid-template-columns: 1fr;
+    .action-btn.secondary {
+      background: #4b5563;
+    }
+
+    .action-btn.success {
+      background: #059669;
+    }
+
+    .action-btn.warning {
+      background: #d97706;
+    }
+
+    .action-btn.danger {
+      background: #dc2626;
+    }
+
+    .empty {
+      background: white;
+      padding: 35px 20px;
+      border-radius: 12px;
+      text-align: center;
+      color: #6b7280;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+
+    .success {
+      background: #dcfce7;
+      color: #166534;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 30px;
+      color: #6b7280;
+    }
+
+    @media (min-width: 700px) {
+      .route {
+        grid-template-columns: 1fr 1fr;
       }
 
+      .actions {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
-
   </style>
-
 </head>
 
 <body>
 
+  <!-- LOGIN -->
+  <div id="loginScreen" class="login-box">
 
-<header>
+    <h2>ProTrack Driver</h2>
+    <p>Sign in to access your assigned trips.</p>
 
-  <div>
+    <div id="loginError" class="error hidden"></div>
 
-    <div class="logo">
-      PROTRACK
-    </div>
-
-    <div class="subtitle">
-      Driver App
-    </div>
-
-  </div>
-
-  <div>
-
-    <span id="driverName"></span>
-
-    <button
-      class="gray"
-      onclick="signOut()"
+    <input
+      type="email"
+      id="email"
+      placeholder="Email"
+      autocomplete="email"
     >
-      Sign out
+
+    <input
+      type="password"
+      id="password"
+      placeholder="Password"
+      autocomplete="current-password"
+    >
+
+    <button class="login-btn" onclick="login()">
+      Sign In
     </button>
 
   </div>
 
-</header>
+
+  <!-- DRIVER APP -->
+  <div id="app" class="hidden">
+
+    <header>
+
+      <div>
+        <h1>ProTrack Driver</h1>
+        <small id="driverName">Driver</small>
+      </div>
+
+      <button class="logout-btn" onclick="logout()">
+        Sign Out
+      </button>
+
+    </header>
 
 
-<main>
+    <main class="container">
 
+      <div id="message"></div>
 
-<!-- LOGIN -->
+      <div class="top-card">
 
-<section
-  id="loginSection"
-  class="card login"
->
+        <h2>Today's Trips</h2>
 
-  <h2>
-    Driver Sign In
-  </h2>
+        <div class="date" id="todayDate"></div>
 
-  <label>
-    Email
-  </label>
+      </div>
 
-  <input
-    id="email"
-    type="email"
-    placeholder="Driver email"
-  >
+      <div id="tripList">
 
+        <div class="loading">
+          Loading trips...
+        </div>
 
-  <label>
-    Password
-  </label>
+      </div>
 
-  <input
-    id="password"
-    type="password"
-    placeholder="Password"
-  >
-
-
-  <button
-    class="blue"
-    onclick="signIn()"
-  >
-    Sign In
-  </button>
-
-
-  <div
-    id="loginError"
-    class="error"
-  ></div>
-
-</section>
-
-
-
-<!-- DRIVER APP -->
-
-<section
-  id="driverApp"
-  class="hidden"
->
-
-
-<div class="card">
-
-  <div
-    style="
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-    "
-  >
-
-    <div>
-
-      <h2
-        style="margin:0"
-      >
-        Today's Trips
-      </h2>
-
-      <div
-        id="today"
-        class="muted"
-      ></div>
-
-    </div>
-
-
-    <button
-      class="gray"
-      onclick="loadTrips()"
-    >
-      Refresh
-    </button>
+    </main>
 
   </div>
-
-</div>
-
-
-<div
-  id="tripsContainer"
-></div>
-
-
-</section>
-
-
-</main>
-
 
 
 <script>
 
+  /* =========================================================
+     CONFIG
+  ========================================================= */
 
-const db =
-  supabase.createClient(
-    PROTRACK_CONFIG.supabaseUrl,
-    PROTRACK_CONFIG.supabaseKey
+  const config = window.PROTRACK_CONFIG;
+
+  if (!config) {
+    document.body.innerHTML = `
+      <div style="padding:30px;font-family:Arial">
+        <h2>Configuration Error</h2>
+        <p>config.js could not be loaded.</p>
+      </div>
+    `;
+    throw new Error("PROTRACK_CONFIG missing");
+  }
+
+  const supabaseClient = window.supabase.createClient(
+    config.supabaseUrl,
+    config.supabaseKey
   );
 
 
-let currentDriver =
-  null;
+  /* =========================================================
+     GLOBAL STATE
+  ========================================================= */
+
+  let currentUser = null;
+  let currentProfile = null;
+  let realtimeChannels = [];
 
 
-/* ============================
-   LOGIN
-============================ */
+  /* =========================================================
+     HELPERS
+  ========================================================= */
 
-async function signIn() {
+  function showError(message) {
 
-  document.getElementById(
-    "loginError"
-  ).textContent = "";
+    const box = document.getElementById("loginError");
 
-
-  const email =
-    document.getElementById(
-      "email"
-    ).value.trim();
-
-
-  const password =
-    document.getElementById(
-      "password"
-    ).value;
-
-
-  if (
-    !email ||
-    !password
-  ) {
-
-    document.getElementById(
-      "loginError"
-    ).textContent =
-      "Please enter your email and password.";
-
-    return;
+    box.textContent = message;
+    box.classList.remove("hidden");
   }
 
 
-  const {
-    data,
-    error
-  } =
-    await db.auth.signInWithPassword({
+  function clearLoginError() {
 
-      email,
-      password
+    const box = document.getElementById("loginError");
 
+    box.textContent = "";
+    box.classList.add("hidden");
+  }
+
+
+  function showMessage(message, type = "success") {
+
+    const box = document.getElementById("message");
+
+    box.innerHTML = `
+      <div class="${type}">
+        ${escapeHtml(message)}
+      </div>
+    `;
+
+    setTimeout(() => {
+      box.innerHTML = "";
+    }, 4000);
+  }
+
+
+  function escapeHtml(value) {
+
+    if (value === null || value === undefined) {
+      return "";
+    }
+
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+
+  function formatMoney(value) {
+
+    if (value === null || value === undefined) {
+      return "$0.00";
+    }
+
+    return "$" + Number(value).toFixed(2);
+  }
+
+
+  function formatStatus(status) {
+
+    const labels = {
+      scheduled: "Scheduled",
+      assigned: "Assigned",
+      accepted: "Accepted",
+      en_route: "En Route",
+      arrived: "Arrived",
+      passenger_onboard: "Passenger Onboard",
+      completed: "Completed",
+      cancelled: "Cancelled"
+    };
+
+    return labels[status] || status;
+  }
+
+
+  function formatDateTime(value) {
+
+    if (!value) {
+      return "—";
+    }
+
+    const date = new Date(value);
+
+    return date.toLocaleString([], {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
     });
-
-
-  if (error) {
-
-    document.getElementById(
-      "loginError"
-    ).textContent =
-      error.message;
-
-    return;
   }
 
 
-  await initializeDriver(
-    data.user
-  );
+  function getTodayRange() {
 
-}
+    const now = new Date();
+
+    const start = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,
+      0,
+      0
+    );
+
+    const end = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      59,
+      59
+    );
+
+    return {
+      start: start.toISOString(),
+      end: end.toISOString()
+    };
+  }
 
 
-/* ============================
-   INITIALIZE
-============================ */
+  /* =========================================================
+     LOGIN
+  ========================================================= */
 
-async function initializeDriver(
-  user
-) {
+  async function login() {
 
-  const {
-    data,
-    error
-  } =
-    await db
+    clearLoginError();
+
+    const email =
+      document.getElementById("email").value.trim();
+
+    const password =
+      document.getElementById("password").value;
+
+    if (!email || !password) {
+
+      showError("Please enter your email and password.");
+
+      return;
+    }
+
+    const { data, error } =
+      await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
+
+    if (error) {
+
+      showError(error.message);
+
+      return;
+    }
+
+    currentUser = data.user;
+
+    await loadProfile();
+
+  }
+
+
+  /* =========================================================
+     LOAD PROFILE
+  ========================================================= */
+
+  async function loadProfile() {
+
+    const {
+      data,
+      error
+    } = await supabaseClient
       .from("profiles")
       .select("*")
-      .eq(
-        "id",
-        user.id
-      )
+      .eq("id", currentUser.id)
       .single();
 
+    if (error) {
 
-  if (
-    error ||
-    !data
-  ) {
+      await supabaseClient.auth.signOut();
 
-    document.getElementById(
-      "loginError"
-    ).textContent =
-      "Driver profile was not found.";
-
-    await db.auth.signOut();
-
-    return;
-  }
-
-
-  if (
-    data.role !==
-    "driver"
-  ) {
-
-    document.getElementById(
-      "loginError"
-    ).textContent =
-      "This account is not a driver account.";
-
-    await db.auth.signOut();
-
-    return;
-  }
-
-
-  currentDriver =
-    data;
-
-
-  document.getElementById(
-    "driverName"
-  ).textContent =
-    data.full_name;
-
-
-  document.getElementById(
-    "loginSection"
-  ).classList.add(
-    "hidden"
-  );
-
-
-  document.getElementById(
-    "driverApp"
-  ).classList.remove(
-    "hidden"
-  );
-
-
-  document.getElementById(
-    "today"
-  ).textContent =
-    new Date().toLocaleDateString(
-      undefined,
-      {
-        weekday:
-          "long",
-
-        month:
-          "long",
-
-        day:
-          "numeric"
-      }
-    );
-
-
-  await loadTrips();
-
-
-  setupRealtime();
-
-}
-
-
-/* ============================
-   TODAY'S TRIPS
-============================ */
-
-async function loadTrips() {
-
-  if (
-    !currentDriver
-  )
-    return;
-
-
-  const today =
-    new Date();
-
-
-  const start =
-    new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    );
-
-
-  const end =
-    new Date(start);
-
-
-  end.setDate(
-    end.getDate() + 1
-  );
-
-
-  const {
-    data,
-    error
-  } =
-    await db
-      .from("trips")
-      .select(`
-        id,
-        booking_reference,
-        scheduled_at,
-        pickup_location,
-        destination_location,
-        passenger_count,
-        price,
-        status,
-        payment_status,
-        payment_due_on_return,
-        special_instructions,
-        trip_assignments!inner(
-          id,
-          driver_id,
-          assignment_status
-        )
-      `)
-      .eq(
-        "trip_assignments.driver_id",
-        currentDriver.id
-      )
-      .gte(
-        "scheduled_at",
-        start.toISOString()
-      )
-      .lt(
-        "scheduled_at",
-        end.toISOString()
-      )
-      .order(
-        "scheduled_at",
-        {
-          ascending:
-            true
-        }
+      showError(
+        "Your account exists, but no ProTrack profile was found."
       );
 
+      return;
+    }
 
-  if (error) {
+    currentProfile = data;
 
-    document.getElementById(
-      "tripsContainer"
-    ).innerHTML = `
 
-      <div class="card error">
+    /*
+      IMPORTANT:
 
-        ${escapeHTML(
-          error.message
-        )}
+      Driver access is allowed when:
 
-      </div>
+      1. role = driver
 
-    `;
+      OR
 
-    return;
+      2. driver_access = true
+
+      This means your manager account can also use
+      the Driver App.
+    */
+
+    const hasDriverAccess =
+      currentProfile.role === "driver" ||
+      currentProfile.driver_access === true;
+
+
+    if (!hasDriverAccess) {
+
+      await supabaseClient.auth.signOut();
+
+      showError(
+        "Your account does not have Driver App access."
+      );
+
+      return;
+    }
+
+
+    if (currentProfile.active === false) {
+
+      await supabaseClient.auth.signOut();
+
+      showError(
+        "Your ProTrack account is inactive."
+      );
+
+      return;
+    }
+
+
+    document.getElementById("loginScreen")
+      .classList.add("hidden");
+
+    document.getElementById("app")
+      .classList.remove("hidden");
+
+
+    document.getElementById("driverName").textContent =
+      currentProfile.full_name ||
+      currentUser.email;
+
+
+    const now = new Date();
+
+    document.getElementById("todayDate").textContent =
+      now.toLocaleDateString([], {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+
+
+    await loadTrips();
+
+    subscribeToRealtime();
+
   }
 
 
-  renderTrips(
-    data || []
-  );
+  /* =========================================================
+     LOAD TODAY'S ASSIGNED TRIPS
+  ========================================================= */
 
-}
+  async function loadTrips() {
 
+    const list =
+      document.getElementById("tripList");
 
-/* ============================
-   DISPLAY TRIPS
-============================ */
-
-function renderTrips(
-  trips
-) {
-
-  const container =
-    document.getElementById(
-      "tripsContainer"
-    );
-
-
-  if (
-    !trips.length
-  ) {
-
-    container.innerHTML = `
-
-      <div class="card">
-
-        <h3>
-          No trips assigned today
-        </h3>
-
-        <p class="muted">
-
-          Trips assigned by dispatch
-          will appear here automatically.
-
-        </p>
-
+    list.innerHTML = `
+      <div class="loading">
+        Loading trips...
       </div>
-
     `;
 
-    return;
+
+    const {
+      start,
+      end
+    } = getTodayRange();
+
+
+    const {
+      data: assignments,
+      error
+    } = await supabaseClient
+      .from("trip_assignments")
+      .select(`
+        id,
+        trip_id,
+        driver_id,
+        status,
+        trips (
+          id,
+          booking_reference,
+          scheduled_at,
+          client_id,
+          pickup_location,
+          destination,
+          passengers,
+          price,
+          payment_status,
+          collect_on_return,
+          special_instructions,
+          status
+        )
+      `)
+      .eq("driver_id", currentUser.id);
+
+
+    if (error) {
+
+      console.error(error);
+
+      list.innerHTML = `
+        <div class="error">
+          Unable to load your trips.
+          ${escapeHtml(error.message)}
+        </div>
+      `;
+
+      return;
+    }
+
+
+    const trips = (assignments || [])
+      .filter(item => {
+
+        if (!item.trips) {
+          return false;
+        }
+
+        const scheduled =
+          new Date(item.trips.scheduled_at);
+
+        return (
+          scheduled >= new Date(start) &&
+          scheduled <= new Date(end)
+        );
+      })
+      .sort((a, b) => {
+
+        return new Date(a.trips.scheduled_at)
+          - new Date(b.trips.scheduled_at);
+
+      });
+
+
+    if (!trips.length) {
+
+      list.innerHTML = `
+        <div class="empty">
+          <h3>No trips today</h3>
+          <p>You currently have no trips assigned for today.</p>
+        </div>
+      `;
+
+      return;
+    }
+
+
+    list.innerHTML =
+      trips.map(renderTrip).join("");
+
   }
 
 
-  container.innerHTML =
-    trips.map(
-      trip => {
+  /* =========================================================
+     RENDER TRIP
+  ========================================================= */
+
+  function renderTrip(assignment) {
+
+    const trip = assignment.trips;
+
+    const status = trip.status;
+
+    const statusClass =
+      "status-" + status;
 
 
-        const nextStatus = {
-
-          accepted:
-            "en_route",
-
-          en_route:
-            "arrived",
-
-          arrived:
-            "passenger_onboard",
-
-          passenger_onboard:
-            "completed"
-
-        }[
-          trip.status
-        ];
+    let actionButtons = "";
 
 
-        let actions =
-          "";
+    if (
+      status === "scheduled" ||
+      status === "assigned"
+    ) {
+
+      actionButtons += `
+        <button
+          class="action-btn"
+          onclick="updateTripStatus(
+            '${trip.id}',
+            '${assignment.id}',
+            'accepted'
+          )"
+        >
+          Accept Trip
+        </button>
+      `;
+
+    }
 
 
-        if (
-          trip.status ===
-          "assigned"
-        ) {
+    if (status === "accepted") {
 
-          actions += `
+      actionButtons += `
+        <button
+          class="action-btn warning"
+          onclick="updateTripStatus(
+            '${trip.id}',
+            '${assignment.id}',
+            'en_route'
+          )"
+        >
+          Start Trip — En Route
+        </button>
+      `;
 
-            <button
-              class="blue"
-              onclick="
-                acceptTrip(
-                  '${trip.id}'
-                )
-              "
-            >
-              Accept Trip
-            </button>
-
-          `;
-
-        }
+    }
 
 
-        if (nextStatus) {
+    if (status === "en_route") {
 
-          const buttonText =
-            nextStatus ===
-            "completed"
+      actionButtons += `
+        <button
+          class="action-btn warning"
+          onclick="updateTripStatus(
+            '${trip.id}',
+            '${assignment.id}',
+            'arrived'
+          )"
+        >
+          Arrived
+        </button>
+      `;
 
-              ? "Complete Trip"
-
-              : formatStatus(
-                  nextStatus
-                );
-
-
-          const buttonClass =
-            nextStatus ===
-            "completed"
-
-              ? "green"
-
-              : "blue";
+    }
 
 
-          actions += `
+    if (status === "arrived") {
 
-            <button
-              class="${buttonClass}"
-              onclick="
-                updateTripStatus(
-                  '${trip.id}',
-                  '${nextStatus}'
-                )
-              "
-            >
-              ${buttonText}
-            </button>
+      actionButtons += `
+        <button
+          class="action-btn"
+          onclick="updateTripStatus(
+            '${trip.id}',
+            '${assignment.id}',
+            'passenger_onboard'
+          )"
+        >
+          Passenger Onboard
+        </button>
+      `;
 
-          `;
-
-        }
-
-
-        return `
-
-          <div class="card trip">
+    }
 
 
-            <div
-              class="trip-time"
-            >
+    if (status === "passenger_onboard") {
 
-              ${formatTime(
-                trip.scheduled_at
+      actionButtons += `
+        <button
+          class="action-btn success"
+          onclick="updateTripStatus(
+            '${trip.id}',
+            '${assignment.id}',
+            'completed'
+          )"
+        >
+          Complete Trip
+        </button>
+      `;
+
+    }
+
+
+    if (status === "completed") {
+
+      actionButtons = `
+        <div class="success">
+          Trip completed.
+        </div>
+      `;
+
+    }
+
+
+    let paymentClass = "";
+
+    if (trip.payment_status === "unpaid") {
+      paymentClass = "unpaid";
+    }
+
+    if (trip.collect_on_return) {
+      paymentClass = "return";
+    }
+
+
+    return `
+
+      <div class="trip-card">
+
+        <div class="trip-header">
+
+          <div>
+
+            <div class="booking-ref">
+              ${escapeHtml(
+                trip.booking_reference || "No reference"
               )}
-
             </div>
 
-
-            <div
-              class="booking"
-            >
-
-              ${escapeHTML(
-                trip.booking_reference
-              )}
-
+            <div class="trip-time">
+              ${formatDateTime(trip.scheduled_at)}
             </div>
-
-
-            <div
-              class="status"
-            >
-
-              ${formatStatus(
-                trip.status
-              )}
-
-            </div>
-
-
-            <div
-              class="route"
-            >
-
-              ${escapeHTML(
-                trip.pickup_location
-              )}
-
-              →
-
-              ${escapeHTML(
-                trip.destination_location
-              )}
-
-            </div>
-
-
-            <div
-              class="details"
-            >
-
-
-              <div
-                class="detail"
-              >
-
-                <div
-                  class="detail-label"
-                >
-                  PASSENGERS
-                </div>
-
-                <div
-                  class="detail-value"
-                >
-
-                  ${trip.passenger_count}
-
-                </div>
-
-              </div>
-
-
-              <div
-                class="detail"
-              >
-
-                <div
-                  class="detail-label"
-                >
-                  PRICE
-                </div>
-
-                <div
-                  class="detail-value"
-                >
-
-                  $${Number(
-                    trip.price || 0
-                  ).toFixed(2)}
-
-                </div>
-
-              </div>
-
-
-              <div
-                class="detail"
-              >
-
-                <div
-                  class="detail-label"
-                >
-                  PAYMENT
-                </div>
-
-                <div
-                  class="detail-value"
-                >
-
-                  ${formatStatus(
-                    trip.payment_status
-                  )}
-
-                </div>
-
-              </div>
-
-
-              <div
-                class="detail"
-              >
-
-                <div
-                  class="detail-label"
-                >
-                  RETURN COLLECTION
-                </div>
-
-                <div
-                  class="detail-value"
-                >
-
-                  ${
-                    trip.payment_due_on_return
-                      ? "YES"
-                      : "NO"
-                  }
-
-                </div>
-
-              </div>
-
-
-            </div>
-
-
-            ${
-              trip.special_instructions
-                ? `
-
-                  <div
-                    class="instructions"
-                  >
-
-                    <strong>
-                      Special Instructions
-                    </strong>
-
-                    <br><br>
-
-                    ${escapeHTML(
-                      trip.special_instructions
-                    )}
-
-                  </div>
-
-                `
-                : ""
-            }
-
-
-            ${
-              actions
-                ? `
-
-                  <div
-                    class="actions"
-                  >
-
-                    ${actions}
-
-                  </div>
-
-                `
-                : ""
-            }
-
 
           </div>
 
-        `;
+          <div class="status ${statusClass}">
+            ${formatStatus(status)}
+          </div>
 
-      }
-    ).join("");
-
-}
-
-
-/* ============================
-   ACCEPT TRIP
-============================ */
-
-async function acceptTrip(
-  tripId
-) {
-
-  const {
-    error
-  } =
-    await db
-      .from(
-        "trip_assignments"
-      )
-      .update({
-
-        assignment_status:
-          "accepted",
-
-        accepted_at:
-          new Date()
-            .toISOString()
-
-      })
-      .eq(
-        "trip_id",
-        tripId
-      )
-      .eq(
-        "driver_id",
-        currentDriver.id
-      );
+        </div>
 
 
-  if (error) {
+        <div class="route">
 
-    alert(
-      error.message
-    );
+          <div class="location">
 
-    return;
+            <div class="location-label">
+              Pickup
+            </div>
+
+            <div class="location-value">
+              ${escapeHtml(trip.pickup_location)}
+            </div>
+
+          </div>
+
+
+          <div class="location">
+
+            <div class="location-label">
+              Destination
+            </div>
+
+            <div class="location-value">
+              ${escapeHtml(trip.destination)}
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="details">
+
+          <div class="detail">
+
+            <div class="detail-label">
+              Passengers
+            </div>
+
+            <div class="detail-value">
+              ${escapeHtml(trip.passengers)}
+            </div>
+
+          </div>
+
+
+          <div class="detail">
+
+            <div class="detail-label">
+              Trip Value
+            </div>
+
+            <div class="detail-value">
+              ${formatMoney(trip.price)}
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="payment ${paymentClass}">
+
+          <strong>Payment:</strong>
+
+          ${escapeHtml(
+            formatPaymentStatus(
+              trip.payment_status
+            )
+          )}
+
+          ${
+            trip.collect_on_return
+              ? "<br><strong>⚠ Collect payment on return trip</strong>"
+              : ""
+          }
+
+        </div>
+
+
+        ${
+          trip.special_instructions
+            ? `
+              <div class="instructions">
+
+                <strong>Special Instructions</strong>
+
+                <div style="margin-top:6px">
+                  ${escapeHtml(
+                    trip.special_instructions
+                  )}
+                </div>
+
+              </div>
+            `
+            : ""
+        }
+
+
+        <div class="actions">
+
+          ${actionButtons}
+
+        </div>
+
+      </div>
+
+    `;
+
   }
 
 
-  await updateTripStatus(
+  /* =========================================================
+     PAYMENT STATUS
+  ========================================================= */
+
+  function formatPaymentStatus(status) {
+
+    const labels = {
+
+      unpaid: "Unpaid",
+
+      partial: "Partially Paid",
+
+      paid: "Paid",
+
+      collect_on_return:
+        "Collect on Return",
+
+      waived: "Waived"
+
+    };
+
+    return labels[status] || status || "Unknown";
+
+  }
+
+
+  /* =========================================================
+     UPDATE TRIP STATUS
+  ========================================================= */
+
+  async function updateTripStatus(
     tripId,
-    "accepted"
-  );
+    assignmentId,
+    newStatus
+  ) {
 
-}
+    const confirmed =
+      confirm(
+        `Change trip status to "${formatStatus(newStatus)}"?`
+      );
+
+    if (!confirmed) {
+      return;
+    }
 
 
-/* ============================
-   UPDATE STATUS
-============================ */
-
-async function updateTripStatus(
-  tripId,
-  status
-) {
-
-  const {
-    error
-  } =
-    await db
+    const {
+      data: trip,
+      error: tripError
+    } = await supabaseClient
       .from("trips")
       .update({
-
-        status,
-
-        updated_at:
-          new Date()
-            .toISOString()
-
+        status: newStatus
       })
-      .eq(
-        "id",
-        tripId
+      .eq("id", tripId)
+      .select()
+      .single();
+
+
+    if (tripError) {
+
+      console.error(tripError);
+
+      showMessage(
+        "Unable to update trip: " +
+        tripError.message,
+        "error"
       );
 
+      return;
+    }
 
-  if (error) {
 
-    alert(
-      error.message
+    /*
+      Record the status change.
+    */
+
+    const {
+      error: historyError
+    } = await supabaseClient
+      .from("trip_status_history")
+      .insert({
+
+        trip_id: tripId,
+
+        status: newStatus,
+
+        changed_by: currentUser.id
+
+      });
+
+
+    if (historyError) {
+
+      console.warn(
+        "Status history error:",
+        historyError
+      );
+
+    }
+
+
+    /*
+      When completed, mark the assignment completed.
+    */
+
+    if (newStatus === "completed") {
+
+      const {
+        error: assignmentError
+      } = await supabaseClient
+        .from("trip_assignments")
+        .update({
+          status: "completed"
+        })
+        .eq("id", assignmentId)
+        .eq("driver_id", currentUser.id);
+
+
+      if (assignmentError) {
+
+        console.warn(
+          "Assignment update error:",
+          assignmentError
+        );
+
+      }
+
+    }
+
+
+    showMessage(
+      `Trip updated to ${formatStatus(newStatus)}.`
     );
 
-    return;
+
+    await loadTrips();
+
   }
 
 
-  await db
-    .from(
-      "trip_status_history"
-    )
-    .insert({
+  /* =========================================================
+     REALTIME
+  ========================================================= */
 
-      trip_id:
-        tripId,
+  function subscribeToRealtime() {
 
-      status,
+    realtimeChannels.forEach(channel => {
 
-      changed_by:
-        currentDriver.id
+      supabaseClient
+        .removeChannel(channel);
 
     });
 
+    realtimeChannels = [];
 
-  if (
-    status ===
-    "completed"
-  ) {
 
-    await db
-      .from(
-        "trip_assignments"
-      )
-      .update({
+    const assignmentChannel =
+      supabaseClient
+        .channel(
+          "driver-assignments-" +
+          currentUser.id
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "trip_assignments",
+            filter:
+              "driver_id=eq." +
+              currentUser.id
+          },
+          () => {
 
-        assignment_status:
-          "completed",
+            loadTrips();
 
-        completed_at:
-          new Date()
-            .toISOString()
+          }
+        )
+        .subscribe();
 
-      })
-      .eq(
-        "trip_id",
-        tripId
-      )
-      .eq(
-        "driver_id",
-        currentDriver.id
-      );
+
+    const tripChannel =
+      supabaseClient
+        .channel(
+          "driver-trips-" +
+          currentUser.id
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "trips"
+          },
+          () => {
+
+            loadTrips();
+
+          }
+        )
+        .subscribe();
+
+
+    realtimeChannels.push(
+      assignmentChannel,
+      tripChannel
+    );
 
   }
 
 
-  await loadTrips();
+  /* =========================================================
+     LOGOUT
+  ========================================================= */
 
-}
+  async function logout() {
+
+    realtimeChannels.forEach(channel => {
+
+      supabaseClient
+        .removeChannel(channel);
+
+    });
+
+    realtimeChannels = [];
 
 
-/* ============================
-   REALTIME
-============================ */
+    await supabaseClient.auth.signOut();
 
-function setupRealtime() {
+    currentUser = null;
+    currentProfile = null;
 
-  db
-    .channel(
-      "driver-updates"
-    )
 
-    .on(
-      "postgres_changes",
-      {
-        event:
-          "*",
+    document.getElementById("app")
+      .classList.add("hidden");
 
-        schema:
-          "public",
+    document.getElementById("loginScreen")
+      .classList.remove("hidden");
 
-        table:
-          "trip_assignments"
-      },
+    document.getElementById("password")
+      .value = "";
 
-      () => {
+  }
 
-        loadTrips();
+
+  /* =========================================================
+     AUTO LOGIN / SESSION CHECK
+  ========================================================= */
+
+  async function initialize() {
+
+    const {
+      data: {
+        session
+      }
+    } = await supabaseClient.auth.getSession();
+
+
+    if (session) {
+
+      currentUser = session.user;
+
+      await loadProfile();
+
+    }
+
+  }
+
+
+  supabaseClient.auth.onAuthStateChange(
+    async (event, session) => {
+
+      if (event === "SIGNED_OUT") {
+
+        currentUser = null;
+        currentProfile = null;
 
       }
-    )
 
-    .on(
-      "postgres_changes",
-      {
-        event:
-          "*",
-
-        schema:
-          "public",
-
-        table:
-          "trips"
-      },
-
-      () => {
-
-        loadTrips();
-
-      }
-    )
-
-    .subscribe();
-
-}
-
-
-/* ============================
-   SIGN OUT
-============================ */
-
-async function signOut() {
-
-  await db.auth.signOut();
-
-  location.reload();
-
-}
-
-
-/* ============================
-   HELPERS
-============================ */
-
-function formatTime(
-  value
-) {
-
-  return new Date(
-    value
-  ).toLocaleTimeString(
-    [],
-    {
-      hour:
-        "2-digit",
-
-      minute:
-        "2-digit"
     }
   );
 
-}
 
-
-function formatStatus(
-  value
-) {
-
-  return String(
-    value || ""
-  )
-    .replaceAll(
-      "_",
-      " "
-    )
-    .replace(
-      /\b\w/g,
-      letter =>
-        letter.toUpperCase()
-    );
-
-}
-
-
-function escapeHTML(
-  value
-) {
-
-  return String(
-    value || ""
-  )
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
-
-}
-
-
-/* ============================
-   AUTO LOGIN
-============================ */
-
-(async function() {
-
-  const {
-    data
-  } =
-    await db.auth.getUser();
-
-
-  if (
-    data &&
-    data.user
-  ) {
-
-    await initializeDriver(
-      data.user
-    );
-
-  }
-
-})();
+  initialize();
 
 </script>
 
