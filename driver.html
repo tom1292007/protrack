@@ -425,19 +425,12 @@
         padding:30px;
         font-family:Arial;
       ">
-
         <h2>Configuration Error</h2>
-
-        <p>
-          config.js could not be loaded.
-        </p>
-
+        <p>config.js could not be loaded.</p>
       </div>
     `;
 
-    throw new Error(
-      "PROTRACK_CONFIG missing"
-    );
+    throw new Error("PROTRACK_CONFIG missing");
   }
 
 
@@ -508,21 +501,30 @@
     const labels = {
 
       scheduled: "Scheduled",
+      assigned: "Assigned",
+      accepted: "Accepted",
+      en_route: "En Route",
+      arrived: "Arrived",
+      passenger_onboard: "Passenger Onboard",
+      completed: "Completed",
+      cancelled: "Cancelled"
+
+    };
+
+    return labels[status] || status;
+
+  }
+
+
+  function formatAssignmentStatus(status) {
+
+    const labels = {
 
       assigned: "Assigned",
-
       accepted: "Accepted",
-
-      en_route: "En Route",
-
-      arrived: "Arrived",
-
-      passenger_onboard:
-        "Passenger Onboard",
-
-      completed: "Completed",
-
-      cancelled: "Cancelled"
+      rejected: "Rejected",
+      released: "Released",
+      completed: "Completed"
 
     };
 
@@ -536,14 +538,9 @@
     const labels = {
 
       unpaid: "Unpaid",
-
       partial: "Partially Paid",
-
       paid: "Paid",
-
-      collect_on_return:
-        "Collect on Return",
-
+      collect_on_return: "Collect on Return",
       waived: "Waived"
 
     };
@@ -567,11 +564,8 @@
     return date.toLocaleString([], {
 
       month: "short",
-
       day: "numeric",
-
       hour: "numeric",
-
       minute: "2-digit"
 
     });
@@ -675,7 +669,6 @@
         .signInWithPassword({
 
           email: email,
-
           password: password
 
         });
@@ -767,18 +760,6 @@
       );
 
 
-    console.log(
-      "ProTrack profile:",
-      currentProfile
-    );
-
-
-    console.log(
-      "Driver access:",
-      hasDriverAccess
-    );
-
-
     if (!hasDriverAccess) {
 
       await supabaseClient.auth
@@ -854,11 +835,13 @@
 
 
     /*
-      We load assignments belonging to
-      the logged-in driver.
+      IMPORTANT:
 
-      Then we load the exact columns
-      that exist in your trips table.
+      trip_assignments uses:
+
+      assignment_status
+
+      NOT status.
     */
 
     const {
@@ -871,17 +854,20 @@
           id,
           trip_id,
           driver_id,
-          status,
+          assignment_status,
+          assigned_at,
+          accepted_at,
+          completed_at,
           trips (
             id,
             booking_reference,
             scheduled_at,
             pickup_location,
             destination_location,
-            passengers:passenger_count,
+            passenger_count,
             price,
             payment_status,
-            collect_on_return:payment_due_on_return,
+            payment_due_on_return,
             special_instructions,
             status
           )
@@ -922,7 +908,7 @@
 
 
     /*
-      Only display today's trips.
+      Only show trips scheduled for today.
     */
 
     const now =
@@ -1041,6 +1027,13 @@
     let actionButtons = "";
 
 
+    /*
+      Trip status is stored in trips.status.
+      Assignment status is stored separately
+      in trip_assignments.assignment_status.
+    */
+
+
     if (
       status === "scheduled" ||
       status === "assigned"
@@ -1050,10 +1043,9 @@
 
         <button
           class="action-btn"
-          onclick="updateTripStatus(
+          onclick="acceptTrip(
             '${trip.id}',
-            '${assignment.id}',
-            'accepted'
+            '${assignment.id}'
           )"
         >
           Accept Trip
@@ -1182,7 +1174,7 @@
 
 
     if (
-      trip.collect_on_return
+      trip.payment_due_on_return
     ) {
 
       paymentClass =
@@ -1281,7 +1273,7 @@
             <div class="detail-value">
 
               ${escapeHtml(
-                trip.passengers
+                trip.passenger_count
               )}
 
             </div>
@@ -1323,7 +1315,7 @@
           )}
 
           ${
-            trip.collect_on_return
+            trip.payment_due_on_return
               ? `
                 <br><br>
 
@@ -1379,6 +1371,139 @@
 
 
   /* =====================================================
+     ACCEPT TRIP
+  ====================================================== */
+
+  async function acceptTrip(
+    tripId,
+    assignmentId
+  ) {
+
+    const confirmed =
+      confirm(
+        "Accept this trip?"
+      );
+
+
+    if (!confirmed) {
+      return;
+    }
+
+
+    /*
+      Update the assignment itself.
+    */
+
+    const {
+      error:
+        assignmentError
+    } =
+      await supabaseClient
+        .from("trip_assignments")
+        .update({
+
+          assignment_status:
+            "accepted",
+
+          accepted_at:
+            new Date().toISOString()
+
+        })
+        .eq(
+          "id",
+          assignmentId
+        )
+        .eq(
+          "driver_id",
+          currentUser.id
+        );
+
+
+    if (assignmentError) {
+
+      console.error(
+        assignmentError
+      );
+
+      showMessage(
+        "Unable to accept trip: " +
+        assignmentError.message,
+        "error"
+      );
+
+      return;
+    }
+
+
+    /*
+      Update the trip status.
+    */
+
+    const {
+      error:
+        tripError
+    } =
+      await supabaseClient
+        .from("trips")
+        .update({
+
+          status:
+            "accepted"
+
+        })
+        .eq(
+          "id",
+          tripId
+        );
+
+
+    if (tripError) {
+
+      showMessage(
+        "Trip assignment accepted, but trip status could not be updated: " +
+        tripError.message,
+        "error"
+      );
+
+      await loadTrips();
+
+      return;
+    }
+
+
+    /*
+      Record status history.
+    */
+
+    await supabaseClient
+      .from(
+        "trip_status_history"
+      )
+      .insert({
+
+        trip_id:
+          tripId,
+
+        status:
+          "accepted",
+
+        changed_by:
+          currentUser.id
+
+      });
+
+
+    showMessage(
+      "Trip accepted."
+    );
+
+
+    await loadTrips();
+
+  }
+
+
+  /* =====================================================
      UPDATE TRIP STATUS
   ====================================================== */
 
@@ -1421,7 +1546,6 @@
     if (error) {
 
       console.error(
-        "Trip update error:",
         error
       );
 
@@ -1436,7 +1560,7 @@
 
 
     /*
-      Record the status change.
+      Record status history.
     */
 
     const {
@@ -1472,8 +1596,8 @@
 
 
     /*
-      Mark assignment completed
-      when the trip is completed.
+      When completed, update the assignment
+      using assignment_status.
     */
 
     if (
@@ -1491,8 +1615,11 @@
           )
           .update({
 
-            status:
-              "completed"
+            assignment_status:
+              "completed",
+
+            completed_at:
+              new Date().toISOString()
 
           })
           .eq(
@@ -1704,10 +1831,6 @@
   }
 
 
-  /* =====================================================
-     AUTH STATE
-  ====================================================== */
-
   supabaseClient.auth
     .onAuthStateChange(
       async (
@@ -1729,10 +1852,6 @@
       }
     );
 
-
-  /* =====================================================
-     START
-  ====================================================== */
 
   initialize();
 
