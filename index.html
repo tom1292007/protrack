@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProTrack Management</title>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{--bg:#f4f7fb;--panel:#fff;--ink:#172033;--muted:#718096;--line:#e4e9f0;--brand:#1456d9;--brand2:#0b3eaa;--danger:#c62828;--ok:#138a52;--warn:#a76500}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}.hidden{display:none!important}
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}.login-card{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:18px;padding:28px;box-shadow:0 16px 50px #17345a12}
+.logo{font-size:26px;font-weight:800;letter-spacing:-.7px}.sub{color:var(--muted);margin-top:5px}.field{margin:12px 0}.field label{display:block;font-weight:700;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;padding:11px 12px;border:1px solid #d8dee8;border-radius:10px;background:#fff}.field textarea{min-height:85px;resize:vertical}
+.primary{background:var(--brand);color:#fff;padding:11px 15px;border-radius:10px;font-weight:700}.primary:hover{background:var(--brand2)}.secondary{background:#edf2f8;color:#26364d;padding:9px 13px;border-radius:9px;font-weight:700}.danger{background:#fff0f0;color:var(--danger);padding:8px 11px;border-radius:8px;font-weight:700}.success{background:#eaf8f1;color:var(--ok);padding:8px 11px;border-radius:8px;font-weight:700}
+.app{display:flex;min-height:100vh}.side{width:245px;background:#101a2c;color:#fff;padding:20px 14px;position:fixed;inset:0 auto 0 0;overflow:auto}.brand{padding:4px 10px 22px;font-size:23px;font-weight:800}.brand small{display:block;color:#8fa1bf;font-size:11px;margin-top:3px}.nav-group{margin:17px 0 7px 10px;color:#7083a3;text-transform:uppercase;font-size:10px;font-weight:800;letter-spacing:1px}.nav button{width:100%;text-align:left;background:transparent;color:#d9e1ef;padding:10px 12px;border-radius:8px;margin:2px 0}.nav button:hover,.nav button.active{background:#1b2a45;color:#fff}.main{margin-left:245px;flex:1;padding:25px;max-width:1700px}.top{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:20px}.top h1{margin:0;font-size:25px}.top-right{display:flex;gap:9px;align-items:center}.user-pill{background:#fff;border:1px solid var(--line);padding:9px 12px;border-radius:10px;color:#52627a}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:17px}.metric{font-size:25px;font-weight:800;margin-top:6px}.muted{color:var(--muted)}.section{background:#fff;border:1px solid var(--line);border-radius:13px;margin-top:16px;overflow:hidden}.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 17px;border-bottom:1px solid var(--line)}.section-head h2{font-size:16px;margin:0}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.toolbar input,.toolbar select{padding:9px 10px;border:1px solid #d8dee8;border-radius:9px}
+.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:760px}.table th,.table td{text-align:left;padding:11px 13px;border-bottom:1px solid #edf0f4;vertical-align:middle}.table th{font-size:11px;color:#748198;text-transform:uppercase;letter-spacing:.4px;background:#fbfcfe}.table tr:last-child td{border-bottom:0}.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#edf2f8;color:#45556d;font-size:11px;font-weight:800}.badge.ok{background:#e7f7ef;color:#117a49}.badge.warn{background:#fff3df;color:#9b6100}.badge.bad{background:#ffe9e9;color:#b72c2c}
+.empty{padding:30px;text-align:center;color:var(--muted)}.check-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px;background:#f7f9fc;border:1px solid var(--line);border-radius:10px}.check-item{font-size:13px;padding:7px}.activity-image-row{display:grid;grid-template-columns:1.6fr 1fr auto;gap:8px;margin-bottom:8px}.activity-image-row input{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px}.pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef2ff;font-size:11px;margin:2px}.detail-gallery img{width:100%;height:180px;object-fit:cover;border-radius:12px}.detail-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.modal{position:fixed;inset:0;background:#09111c80;display:grid;place-items:center;padding:20px;z-index:20}.modal-card{width:min(720px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;padding:20px}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.modal-head h2{margin:0;font-size:19px}.x{background:#edf2f8;border-radius:8px;padding:6px 10px}.form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:17px}
+.notice{padding:11px 13px;border-radius:9px;margin:10px 0;background:#eef5ff;color:#27528c}.error{background:#fff0f0;color:#b22b2b}.oktext{color:var(--ok);font-weight:700}
+.kpi-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.mini{padding:12px;background:#f7f9fc;border-radius:10px}.mini b{display:block;font-size:18px;margin-top:3px}
+@media(max-width:1000px){.cards{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr 1fr}.side{width:210px}.main{margin-left:210px}}
+@media(max-width:700px){.side{position:static;width:100%;height:auto}.app{display:block}.main{margin:0;padding:15px}.nav{display:grid;grid-template-columns:repeat(2,1fr)}.cards,.grid2,.grid3,.check-grid,.detail-gallery{grid-template-columns:1fr}.activity-image-row{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.table{min-width:650px}}
+</style>
+</head>
+<body>
+<div id="login" class="login">
+  <div class="login-card">
+    <div class="logo">ProTrack</div><div class="sub">Management Command Center</div>
+    <div id="loginMsg"></div>
+    <div class="field"><label>Email</label><input id="email" type="email" autocomplete="username"></div>
+    <div class="field"><label>Password</label><input id="password" type="password" autocomplete="current-password"></div>
+    <button class="primary" style="width:100%" onclick="login()">Sign in</button>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+<aside class="side">
+  <div class="brand">ProTrack<small>OPERATIONS PLATFORM</small></div>
+  <div class="nav">
+    <div class="nav-group">Operations</div>
+    <button data-page="dashboard" onclick="showPage('dashboard')">Dashboard</button>
+    <button data-page="dispatch" onclick="showPage('dispatch')">Dispatch</button>
+    <button data-page="trips" onclick="showPage('trips')">Trips</button>
+    <button data-page="live" onclick="showPage('live')">Live Drivers</button>
+    <div class="nav-group">People</div>
+    <button data-page="drivers" onclick="showPage('drivers')">Drivers</button>
+    <button data-page="guests" onclick="showPage('guests')">Guests</button>
+    <button data-page="properties" onclick="showPage('properties')">Properties</button>
+    <div class="nav-group">Fleet</div>
+    <button data-page="vehicles" onclick="showPage('vehicles')">Vehicles</button>
+    <div class="nav-group">Activities</div>
+    <button data-page="activities" onclick="showPage('activities')">Activities</button>
+    <button data-page="categories" onclick="showPage('categories')">Categories</button>
+    <button data-page="providers" onclick="showPage('providers')">Providers</button>
+    <button data-page="activityBookings" onclick="showPage('activityBookings')">Activity Bookings</button>
+    <div class="nav-group">Finance</div>
+    <button data-page="payments" onclick="showPage('payments')">Payments</button>
+    <button data-page="outstanding" onclick="showPage('outstanding')">Outstanding</button>
+    <button data-page="cash" onclick="showPage('cash')">Driver Cash</button>
+    <button data-page="expenses" onclick="showPage('expenses')">Expenses</button>
+    <button data-page="reports" onclick="showPage('reports')">Reports</button>
+    <div class="nav-group">Settings</div>
+    <button data-page="pricing" onclick="showPage('pricing')">Pricing</button>
+    <button data-page="destinations" onclick="showPage('destinations')">Destinations</button>
+    <button onclick="logout()">Sign out</button>
+  </div>
+</aside>
+<main class="main">
+  <div class="top"><div><h1 id="pageTitle">Dashboard</h1><div class="muted" id="pageSub">Today’s operations</div></div><div class="top-right"><span class="user-pill" id="userName"></span></div></div>
+  <div id="content"></div>
+</main>
+</div>
+
+<div id="modal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h2 id="modalTitle"></h2><button class="x" onclick="closeModal()">✕</button></div><div id="modalBody"></div></div></div>
+
+<script>
+const cfg=window.PROTRACK_CONFIG||{};
+const sb=supabase.createClient(cfg.supabaseUrl,cfg.supabaseKey);
+let me=null, profile=null, currentPage='dashboard';
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const money=v=>'$'+Number(v||0).toFixed(2);
+const fmtDate=v=>v?new Date(v).toLocaleString([], {dateStyle:'short',timeStyle:'short'}):'—';
+const dateOnly=v=>v?new Date(v).toLocaleDateString(): '—';
+const badge=s=>{let c=['completed','paid','active','accepted'].includes(s)?'ok':['requested','scheduled','assigned','partial','collect_on_return'].includes(s)?'warn':['cancelled','unpaid','rejected'].includes(s)?'bad':'';return `<span class="badge ${c}">${esc(s||'—')}</span>`};
+function msg(text,err=false){return `<div class="notice ${err?'error':''}">${esc(text)}</div>`}
+async function init(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(session) await boot(session.user); else document.getElementById('login').classList.remove('hidden');
+}
+async function login(){
+  const email=document.getElementById('email').value.trim(),password=document.getElementById('password').value;
+  const el=document.getElementById('loginMsg'); el.innerHTML='';
+  const {data,error}=await sb.auth.signInWithPassword({email,password});
+  if(error){el.innerHTML=msg(error.message,true);return}
+  await boot(data.user);
+}
+async function boot(user){
+  me=user;
+  const {data:p,error}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+  if(error||!p){await sb.auth.signOut();document.getElementById('loginMsg').innerHTML=msg('No ProTrack profile was found for this account.',true);return}
+  if(!p.active||!['admin','manager','dispatcher'].includes(p.role)){await sb.auth.signOut();document.getElementById('loginMsg').innerHTML=msg('This account does not have management access.',true);return}
+  profile=p; document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden');
+  document.getElementById('userName').textContent=p.full_name||user.email;
+  showPage('dashboard');
+}
+async function logout(){await sb.auth.signOut();location.reload()}
+function showPage(page){
+  currentPage=page; document.querySelectorAll('.nav button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+  const titles={dashboard:['Dashboard','Today’s operations'],dispatch:['Dispatch','Assign and manage today’s trips'],trips:['Trips','All transportation trips'],live:['Live Drivers','Current driver locations'],drivers:['Drivers','Manage driver profiles and access'],guests:['Guests','Manage guest profiles'],properties:['Properties','Manage partner properties'],vehicles:['Vehicles','Manage fleet'],activities:['Activities','Manage activities and catalog'],categories:['Categories','Activity categories'],providers:['Providers','Activity providers'],activityBookings:['Activity Bookings','Manage activity reservations'],payments:['Payments','All recorded payments'],outstanding:['Outstanding','Unpaid and return-leg balances'],cash:['Driver Cash','Cash sessions and reconciliation'],expenses:['Expenses','Driver expenses'],pricing:['Pricing','Transfer pricing rules'],destinations:['Destinations','Service destinations and zones'],reports:['Reports','Revenue, operations and financial analytics']};
+  document.getElementById('pageTitle').textContent=titles[page][0];document.getElementById('pageSub').textContent=titles[page][1];
+  const fn=pages[page]; if(fn) fn();
+}
+async function q(table,select='*'){const r=await sb.from(table).select(select);if(r.error)throw r.error;return r.data||[]}
+function openModal(title,body){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modal').classList.remove('hidden')}
+function closeModal(){document.getElementById('modal').classList.add('hidden')}
+async function save(table,id,data,refresh=true){
+  let r=id?await sb.from(table).update(data).eq('id',id):await sb.from(table).insert(data);
+  if(r.error){alert(r.error.message);return false}closeModal();if(refresh) showPage(currentPage);return true
+}
+function toggle(id,table,field,current){return save(table,id,{[field]:!current})}
+function table(headers,rows){return `<div class="table-wrap"><table class="table"><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows||'<tr><td colspan="'+headers.length+'" class="empty">No records found.</td></tr>'}</tbody></table></div>`}
+async function dashboard(){
+  const today=new Date();const start=new Date(today);start.setHours(0,0,0,0);const end=new Date(today);end.setHours(23,59,59,999);
+  const [tr,pa,op,drivers]=await Promise.all([
+    sb.from('trips').select('id,status,price,payment_status,scheduled_at').gte('scheduled_at',start.toISOString()).lte('scheduled_at',end.toISOString()),
+    sb.from('payments').select('amount').gte('collected_at',start.toISOString()).lte('collected_at',end.toISOString()),
+    sb.from('outstanding_payments').select('amount_due,amount_collected,status'),
+    sb.from('profiles').select('id,full_name,active,role').eq('role','driver')
+  ]);
+  const trips=tr.data||[],payments=pa.data||[],outs=op.data||[];
+  const revenue=trips.reduce((a,x)=>a+Number(x.price||0),0),collected=payments.reduce((a,x)=>a+Number(x.amount||0),0),outstanding=outs.filter(x=>x.status!=='paid').reduce((a,x)=>a+Math.max(0,Number(x.amount_due||0)-Number(x.amount_collected||0)),0);
+  document.getElementById('content').innerHTML=`<div class="cards">
+  <div class="card"><div class="muted">Today’s Trips</div><div class="metric">${trips.length}</div></div>
+  <div class="card"><div class="muted">Completed</div><div class="metric">${trips.filter(x=>x.status==='completed').length}</div></div>
+  <div class="card"><div class="muted">Trip Value</div><div class="metric">${money(revenue)}</div></div>
+  <div class="card"><div class="muted">Payments Collected</div><div class="metric">${money(collected)}</div></div>
+  </div>
+  <div class="cards" style="margin-top:13px">
+  <div class="card"><div class="muted">Outstanding</div><div class="metric">${money(outstanding)}</div></div>
+  <div class="card"><div class="muted">Unassigned</div><div class="metric">${trips.filter(x=>x.status==='scheduled').length}</div></div>
+  <div class="card"><div class="muted">Active Drivers</div><div class="metric">${drivers.filter(x=>x.active).length}</div></div>
+  <div class="card"><div class="muted">Cancelled</div><div class="metric">${trips.filter(x=>x.status==='cancelled').length}</div></div></div>
+  <div class="section"><div class="section-head"><h2>Today’s Trips</h2><button class="secondary" onclick="showPage('dispatch')">Open Dispatch</button></div>${table(['Time','Status','Pickup','Destination','Value'],trips.sort((a,b)=>new Date(a.scheduled_at)-new Date(b.scheduled_at)).map(x=>`<tr><td>${fmtDate(x.scheduled_at)}</td><td>${badge(x.status)}</td><td>—</td><td>—</td><td>${money(x.price)}</td></tr>`).join(''))}</div>`;
+}
+async function dispatch(){
+  const {data,error}=await sb.from('trips').select(`*,trip_assignments(id,driver_id,assignment_status,profiles:driver_id(full_name))`).order('scheduled_at');
+  if(error){document.getElementById('content').innerHTML=msg(error.message,true);return}
+  const drivers=await q('profiles','id,full_name,active,role').then(x=>x.filter(d=>d.role==='driver'&&d.active));
+  document.getElementById('content').innerHTML=`<div class="section"><div class="section-head"><h2>Dispatch Board</h2><button class="primary" onclick="tripForm()">+ New Trip</button></div>${table(['Time','Booking','Route','Pax','Driver','Status','Actions'],(data||[]).map(t=>{
+    const a=t.trip_assignments?.[0],d=a?.profiles?.full_name||'Unassigned';
+    return `<tr><td>${fmtDate(t.scheduled_at)}</td><td><b>${esc(t.booking_reference)}</b></td><td>${esc(t.pickup_location)} → ${esc(t.destination_location)}</td><td>${t.passenger_count}</td><td>${esc(d)}</td><td>${badge(t.status)}</td><td><button class="secondary" onclick="assignTrip('${t.id}')">Assign</button> <button class="secondary" onclick="advanceTrip('${t.id}','${t.status}')">Advance</button></td></tr>`
+  }).join(''))}</div>`;
+}
+async function trips(){
+ const {data,error}=await sb.from('trips').select('*').order('scheduled_at',{ascending:false});
+ if(error){document.getElementById('content').innerHTML=msg(error.message,true);return}
+ document.getElementById('content').innerHTML=`<div class="section"><div class="section-head"><h2>All Trips</h2><button class="primary" onclick="tripForm()">+ New Trip</button></div>${table(['Date','Reference','Pickup','Destination','Pax','Price','Payment','Status'],(data||[]).map(t=>`<tr><td>${fmtDate(t.scheduled_at)}</td><td>${esc(t.booking_reference)}</td><td>${esc(t.pickup_location)}</td><td>${esc(t.destination_location)}</td><td>${t.passenger_count}</td><td>${money(t.price)}</td><td>${badge(t.payment_status)}</td><td>${badge(t.status)}</td></tr>`).join(''))}</div>`;
+}
+async function tripForm(){
+ const drivers=await q('profiles','id,full_name,active,role').then(x=>x.filter(d=>d.role==='driver'&&d.active));
+ const destinations=await q('destinations','id,name,active').then(x=>x.filter(x=>x.active));
+ openModal('Create Trip',`<div class="grid2">
+ <div class="field"><label>Booking Reference</label><input id="f_ref" placeholder="PT-..."></div>
+ <div class="field"><label>Scheduled</label><input id="f_time" type="datetime-local"></div>
+ <div class="field"><label>Client / Guest name</label><input id="f_client" required></div>
+ <div class="field"><label>Passengers</label><input id="f_pax" type="number" min="1" value="1"></div>
+ <div class="field"><label>Pickup</label><input id="f_pickup" required></div>
+ <div class="field"><label>Destination</label><input id="f_dest" list="destlist" required><datalist id="destlist">${destinations.map(x=>`<option value="${esc(x.name)}">`).join('')}</datalist></div>
+ <div class="field"><label>Price</label><input id="f_price" type="number" step=".01" value="0"></div>
+ <div class="field"><label>Payment Status</label><select id="f_pay"><option>unpaid</option><option>partial</option><option>paid</option><option>collect_on_return</option><option>waived</option></select></div>
+ <div class="field"><label>Assign Driver</label><select id="f_driver"><option value="">Unassigned</option>${drivers.map(d=>`<option value="${d.id}">${esc(d.full_name)}</option>`).join('')}</select></div>
+ </div><div class="field"><label>Special Instructions</label><textarea id="f_notes"></textarea></div>
+ <div class="form-actions"><button class="secondary" onclick="closeModal()">Cancel</button><button class="primary" onclick="createTrip()">Create Trip</button></div>`);
+}
+async function createTrip(){
+ const ref=document.getElementById('f_ref').value.trim()||'PT-'+Math.random().toString(36).slice(2,9).toUpperCase();
+ const payload={booking_reference:ref,scheduled_at:new Date(document.getElementById('f_time').value||Date.now()).toISOString(),pickup_location:document.getElementById('f_pickup').value,destination_location:document.getElementById('f_dest').value,passenger_count:Number(document.getElementById('f_pax').value||1),price:Number(document.getElementById('f_price').value||0),payment_status:document.getElementById('f_pay').value,special_instructions:document.getElementById('f_notes').value,created_by:me.id,status:'scheduled'};
+ const r=await sb.from('trips').insert(payload).select('id').single();if(r.error){alert(r.error.message);return}
+ const driver=document.getElementById('f_driver').value;if(driver){const a=await sb.from('trip_assignments').insert({trip_id:r.data.id,driver_id:driver,assignment_status:'assigned'});if(a.error)alert(a.error.message);else await sb.from('trips').update({status:'assigned'}).eq('id',r.data.id)}
+ closeModal();showPage('dispatch');
+}
+async function assignTrip(id){
+ const drivers=await q('profiles','id,full_name,active,role').then(x=>x.filter(d=>d.role==='driver'&&d.active));
+ openModal('Assign Driver',`<div class="field"><label>Driver</label><select id="assign_driver">${drivers.map(d=>`<option value="${d.id}">${esc(d.full_name)}</option>`).join('')}</select></div><div class="form-actions"><button class="primary" onclick="saveAssignment('${id}')">Assign</button></div>`);
+}
+async function saveAssignment(trip){
+ const d=document.getElementById('assign_driver').value;
+ await sb.from('trip_assignments').delete().eq('trip_id',trip);
+ const r=await sb.from('trip_assignments').insert({trip_id:trip,driver_id:d,assignment_status:'assigned'});
+ if(r.error){alert(r.error.message);return}await sb.from('trips').update({status:'assigned'}).eq('id',trip);closeModal();showPage('dispatch');
+}
+const order=['scheduled','assigned','accepted','en_route','arrived','passenger_onboard','completed'];
+async function advanceTrip(id,status){let i=order.indexOf(status);if(i<0||i>=order.length-1)return;const next=order[i+1];const r=await sb.from('trips').update({status:next}).eq('id',id);if(r.error)alert(r.error.message);else showPage(currentPage)}
+async function simpleList(tableName,config){
+ const {data,error}=await sb.from(tableName).select(config.select||'*').order(config.order||'created_at',{ascending:false});
+ if(error){document.getElementById('content').innerHTML=msg(error.message,true);return}
+ const rows=(data||[]).map(x=>config.row(x)).join('');
+ document.getElementById('content').innerHTML=`<div class="section"><div class="section-head"><h2>${config.title}</h2><button class="primary" onclick="${config.form}()">+ Add</button></div>${table(config.headers,rows)}</div>`;
+}
+function drivers(){
+ simpleList('profiles',{title:'Drivers',select:'id,full_name,role,phone,active,driver_access,created_at',order:'created_at',headers:['Name','Phone','Role','Driver Access','Active','Actions'],form:'driverForm',row:d=>`<tr><td><b>${esc(d.full_name)}</b></td><td>${esc(d.phone||'—')}</td><td>${badge(d.role)}</td><td>${d.driver_access?'Yes':'No'}</td><td>${badge(d.active?'active':'inactive')}</td><td><button class="secondary" onclick='driverForm(${JSON.stringify(d)})'>Edit</button> <button class="secondary" onclick="toggle('${d.id}','profiles','active',${!!d.active})">${d.active?'Deactivate':'Activate'}</button></td></tr>`});
+}
+function driverForm(d={}){
+ const isNew=!d.id;
+ openModal(isNew?'Add Driver':'Edit Driver',`${isNew?`<div class="notice"><b>Create driver account directly from ProTrack.</b><br>Enter the driver's email and a temporary password. ProTrack will create the Supabase login and the matching driver profile automatically.</div><div class="field"><label>Login email</label><input id="d_email" type="email" autocomplete="off" placeholder="driver@example.com"></div><div class="field"><label>Temporary password</label><input id="d_password" type="password" autocomplete="new-password" placeholder="At least 8 characters"></div>`:''}<div class="grid2"><div class="field"><label>Full name</label><input id="d_name" value="${esc(d.full_name)}"></div><div class="field"><label>Phone</label><input id="d_phone" value="${esc(d.phone)}"></div><div class="field"><label>Role</label><select id="d_role">${['driver','dispatcher','manager','admin'].map(x=>`<option ${d.role===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Driver access</label><select id="d_access"><option value="false" ${!d.driver_access?'selected':''}>No</option><option value="true" ${d.driver_access?'selected':''}>Yes</option></select></div></div><div class="form-actions"><button class="primary" onclick="saveDriver('${d.id||''}')">${isNew?'Create Driver':'Save Driver'}</button></div>`);
+}
+async function saveDriver(existingId){
+ const name=document.getElementById('d_name').value.trim();
+ const phone=document.getElementById('d_phone').value.trim();
+ const role=document.getElementById('d_role').value;
+ const driver_access=document.getElementById('d_access').value==='true';
+ if(!name){alert('Enter the driver name.');return}
+ if(existingId){
+   const r=await sb.from('profiles').update({full_name:name,phone,role,driver_access,active:true}).eq('id',existingId);
+   if(r.error){alert(r.error.message);return}
+   closeModal();showPage('drivers');
+   return;
+ }
+ const email=document.getElementById('d_email').value.trim();
+ const password=document.getElementById('d_password').value;
+ if(!email){alert('Enter the driver email address.');return}
+ if(password.length<8){alert('Use a temporary password with at least 8 characters.');return}
+ const button=document.querySelector('#modalBody .primary');
+ if(button){button.disabled=true;button.textContent='Creating…'}
+ const {data,error}=await sb.functions.invoke('create-driver',{body:{email,password,full_name:name,phone,role,driver_access}});
+ if(error){
+   let message=error.message||'Could not create driver.';
+   try{if(error.context){const body=await error.context.json();if(body?.error)message=body.error}}catch(_){}
+   alert(message);
+   if(button){button.disabled=false;button.textContent='Create Driver'}
+   return;
+ }
+ closeModal();
+ alert(`Driver ${name} was created successfully.\n\nLogin email: ${email}`);
+ showPage('drivers');
+}
+function guests(){
+ simpleList('guest_profiles',{title:'Guests',select:'*,properties(name)',order:'created_at',headers:['Guest','Contact','Property','Room','Stay','Active','Actions'],form:'guestForm',row:g=>`<tr><td><b>${esc(g.full_name)}</b></td><td>${esc(g.phone||g.email||'—')}</td><td>${esc(g.properties?.name||'—')}</td><td>${esc(g.room_number||'—')}</td><td>${dateOnly(g.check_in)} → ${dateOnly(g.check_out)}</td><td>${badge(g.active?'active':'inactive')}</td><td><button class="secondary" onclick='guestForm(${JSON.stringify(g)})'>Edit</button></td></tr>`});
+}
+async function guestForm(g={}){
+ const props=await q('properties','id,name,active').then(x=>x.filter(p=>p.active));
+ openModal(g.id?'Edit Guest':'Add Guest',`<div class="grid2"><div class="field"><label>Full name</label><input id="g_name" value="${esc(g.full_name)}"></div><div class="field"><label>Email</label><input id="g_email" value="${esc(g.email)}"></div><div class="field"><label>Phone</label><input id="g_phone" value="${esc(g.phone)}"></div><div class="field"><label>Room</label><input id="g_room" value="${esc(g.room_number)}"></div><div class="field"><label>Property</label><select id="g_prop"><option value="">None</option>${props.map(p=>`<option value="${p.id}" ${g.property_id===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div><div class="field"><label>Access code</label><input id="g_code" value="${esc(g.access_code)}"></div><div class="field"><label>Check in</label><input id="g_in" type="datetime-local" value="${g.check_in?new Date(g.check_in).toISOString().slice(0,16):''}"></div><div class="field"><label>Check out</label><input id="g_out" type="datetime-local" value="${g.check_out?new Date(g.check_out).toISOString().slice(0,16):''}"></div></div><div class="field"><label>Notes</label><textarea id="g_notes">${esc(g.notes)}</textarea></div><div class="form-actions"><button class="primary" onclick="save('guest_profiles','${g.id||''}',{full_name:document.getElementById('g_name').value,email:document.getElementById('g_email').value,phone:document.getElementById('g_phone').value,room_number:document.getElementById('g_room').value,property_id:document.getElementById('g_prop').value||null,access_code:document.getElementById('g_code').value,check_in:document.getElementById('g_in').value?new Date(document.getElementById('g_in').value).toISOString():null,check_out:document.getElementById('g_out').value?new Date(document.getElementById('g_out').value).toISOString():null,notes:document.getElementById('g_notes').value})">Save</button></div>`);
+}
+function properties(){simpleList('properties',{title:'Properties',select:'*',order:'created_at',headers:['Name','Address','Phone','Email','Active','Actions'],form:'propertyForm',row:p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.address||'—')}</td><td>${esc(p.phone||'—')}</td><td>${esc(p.email||'—')}</td><td>${badge(p.active?'active':'inactive')}</td><td><button class="secondary" onclick='propertyForm(${JSON.stringify(p)})'>Edit</button></td></tr>`})}
+function propertyForm(p={}){openModal(p.id?'Edit Property':'Add Property',`<div class="grid2"><div class="field"><label>Name</label><input id="p_name" value="${esc(p.name)}"></div><div class="field"><label>Phone</label><input id="p_phone" value="${esc(p.phone)}"></div><div class="field"><label>Email</label><input id="p_email" value="${esc(p.email)}"></div><div class="field"><label>Logo URL</label><input id="p_logo" value="${esc(p.logo_url)}"></div></div><div class="field"><label>Address</label><textarea id="p_address">${esc(p.address)}</textarea></div><div class="form-actions"><button class="primary" onclick="save('properties','${p.id||''}',{name:document.getElementById('p_name').value,address:document.getElementById('p_address').value,phone:document.getElementById('p_phone').value,email:document.getElementById('p_email').value,logo_url:document.getElementById('p_logo').value})">Save</button></div>`)}
+
+function vehicles(){simpleList('vehicles',{title:'Vehicles',select:'*',order:'created_at',headers:['Name','Plate','Type','Capacity','Active','Actions'],form:'vehicleForm',row:v=>`<tr><td><b>${esc(v.name)}</b></td><td>${esc(v.plate_number||'—')}</td><td>${esc(v.vehicle_type||'—')}</td><td>${v.capacity??'—'}</td><td>${badge(v.active?'active':'inactive')}</td><td><button class="secondary" onclick='vehicleForm(${JSON.stringify(v)})'>Edit</button></td></tr>`})}
+function vehicleForm(v={}){openModal(v.id?'Edit Vehicle':'Add Vehicle',`<div class="grid2"><div class="field"><label>Name</label><input id="v_name" value="${esc(v.name)}"></div><div class="field"><label>Plate number</label><input id="v_plate" value="${esc(v.plate_number)}"></div><div class="field"><label>Vehicle type</label><input id="v_type" value="${esc(v.vehicle_type)}"></div><div class="field"><label>Capacity</label><input id="v_cap" type="number" value="${v.capacity??''}"></div></div><div class="form-actions"><button class="primary" onclick="save('vehicles','${v.id||''}',{name:document.getElementById('v_name').value,plate_number:document.getElementById('v_plate').value,vehicle_type:document.getElementById('v_type').value,capacity:document.getElementById('v_cap').value?Number(document.getElementById('v_cap').value):null})">Save</button></div>`)}
+
+async function activities(){
+ try{
+  const [ar,lr,cr]=await Promise.all([
+   sb.from('activities').select('*').order('name'),
+   sb.from('activity_category_links').select('activity_id,category_id'),
+   sb.from('activity_categories').select('id,name,active').eq('active',true).order('name')
+  ]);
+  const err=[ar,lr,cr].find(x=>x.error);
+  if(err){document.getElementById('content').innerHTML=msg('Could not load activities: '+err.error.message,true);return}
+  const acts=ar.data||[], links=lr.data||[], categoriesList=cr.data||[];
+  const catNames=Object.fromEntries(categoriesList.map(c=>[c.id,c.name]));
+  const cats={};
+  links.forEach(x=>{if(!cats[x.activity_id])cats[x.activity_id]=[];if(catNames[x.category_id])cats[x.activity_id].push(catNames[x.category_id])});
+  // Preserve the original single category assignment for older activities that were created before multi-category support.
+  acts.forEach(a=>{if(!cats[a.id]?.length && a.category_id && catNames[a.category_id])cats[a.id]=[catNames[a.category_id]]});
+  document.getElementById('content').innerHTML=`<div class="section"><div class="section-head"><h2>Activities</h2><button class="primary" onclick="activityForm()">+ Add Activity</button></div>${table(['Activity','Categories','Price','Guests','Transport','Active','Actions'],acts.map(a=>`<tr><td><b>${esc(a.name)}</b><div class="muted">${esc(a.short_description||'')}</div></td><td>${(cats[a.id]||[]).map(x=>`<span class="pill">${esc(x)}</span>`).join('')||'<span class="muted">—</span>'}</td><td>${money(a.price)} / ${esc(a.price_type)}</td><td>${a.minimum_guests}–${a.maximum_guests??'∞'}</td><td>${a.transportation_available?'Yes':'No'}</td><td>${badge(a.active?'active':'inactive')}</td><td><button class="secondary" onclick="activityFormById('${a.id}')">Edit</button></td></tr>`).join(''))}</div>`;
+ }catch(e){document.getElementById('content').innerHTML=msg('Could not load activities: '+e.message,true)}
+}
+
+async function activityFormById(id){
+  try{
+    const [ar,lr,ir,cr]=await Promise.all([
+      sb.from('activities').select('*').eq('id',id).single(),
+      sb.from('activity_category_links').select('category_id').eq('activity_id',id),
+      sb.from('activity_images').select('*').eq('activity_id',id).order('sort_order',{ascending:true}).order('created_at',{ascending:true}),
+      sb.from('activity_categories').select('id,name,active').eq('active',true).order('name')
+    ]);
+    const err=[ar,lr,ir,cr].find(x=>x.error);
+    if(err){openModal('Could not edit activity',msg(err.error.message,true));return}
+    const a=ar.data;
+    a._categoryIds=(lr.data||[]).map(x=>x.category_id);
+    a._images=ir.data||[];
+    activityForm(a,cr.data||[]);
+  }catch(e){openModal('Could not edit activity',msg(e.message,true))}
+}
+
+async function activityForm(a={},prefetchedCats=null){
+  const cats=prefetchedCats||await q('activity_categories','id,name,active').then(x=>x.filter(c=>c.active));
+  const selected=a._categoryIds||((a.category_id)?[a.category_id]:[]);
+  const images=(a._images&&a._images.length)?a._images:[{image_url:a.image_url||'',caption:'',sort_order:0}];
+  openModal(a.id?'Edit Activity':'Add Activity',`
+    <div class="grid2">
+      <div class="field"><label>Activity name *</label><input id="a_name" value="${esc(a.name)}"></div>
+      <div class="field"><label>Location</label><input id="a_location" value="${esc(a.location)}"></div>
+      <div class="field"><label>Duration (minutes)</label><input id="a_duration" type="number" min="0" value="${a.duration_minutes??''}"></div>
+      <div class="field"><label>Price</label><input id="a_price" type="number" min="0" step="0.01" value="${a.price??''}"></div>
+      <div class="field"><label>Price type</label><select id="a_price_type">
+        <option value="per_person" ${a.price_type==='per_person'?'selected':''}>Per person</option>
+        <option value="per_booking" ${a.price_type==='per_booking'?'selected':''}>Per booking</option>
+      </select></div>
+      <div class="field"><label>Minimum guests</label><input id="a_min" type="number" min="1" value="${a.minimum_guests??1}"></div>
+      <div class="field"><label>Maximum guests</label><input id="a_max" type="number" min="1" value="${a.maximum_guests??''}"></div>
+      <div class="field"><label>Active</label><select id="a_active"><option value="true" ${a.active!==false?'selected':''}>Active</option><option value="false" ${a.active===false?'selected':''}>Inactive</option></select></div>
+    </div>
+
+    <div class="field"><label>Categories <span class="muted">(select all that apply)</span></label>
+      <div class="check-grid">${cats.map(c=>`<label class="check-item"><input class="activity-category" type="checkbox" value="${c.id}" ${selected.includes(c.id)?'checked':''}> ${esc(c.name)}</label>`).join('')}</div>
+    </div>
+
+    <div class="grid2">
+      <label class="check-item"><input id="a_pickup" type="checkbox" ${a.pickup_available?'checked':''}> Pickup available</label>
+      <label class="check-item"><input id="a_transport" type="checkbox" ${a.transportation_available?'checked':''}> Transportation available</label>
+    </div>
+
+    <div class="field"><label>Short description</label><input id="a_short" value="${esc(a.short_description)}"></div>
+    <div class="field"><label>Full description</label><textarea id="a_desc" rows="7">${esc(a.description)}</textarea></div>
+
+    <div class="field"><label>Terms & Conditions</label><textarea id="a_terms" rows="7" placeholder="Cancellation policy, age/weight restrictions, what is included, what guests should bring, weather policy, etc.">${esc(a.terms_conditions)}</textarea></div>
+
+    <div class="field">
+      <label>Activity Pictures</label>
+      <div id="activityImages">${images.map((im,i)=>activityImageRowHTML(im,i)).join('')}</div>
+      <button type="button" class="secondary" onclick="addActivityImageRow()">+ Add Picture</button>
+      <div class="muted" style="margin-top:6px">Use a direct image URL. Pictures appear in the Guest App activity detail page.</div>
+    </div>
+
+    <div class="form-actions"><button class="primary" onclick="saveActivityFull('${a.id||''}')">Save Activity</button></div>
+  `);
+}
+
+function activityImageRowHTML(im={},i=0){
+  return `<div class="activity-image-row" style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center">
+    <input class="activity-image-url" placeholder="Image URL" value="${esc(im.image_url)}">
+    <input class="activity-image-caption" placeholder="Caption (optional)" value="${esc(im.caption)}">
+    <button type="button" class="secondary" onclick="this.parentElement.remove()">Remove</button>
+  </div>`;
+}
+function addActivityImageRow(){
+  const el=document.getElementById('activityImages');
+  if(el)el.insertAdjacentHTML('beforeend',activityImageRowHTML({},Date.now()));
+}
+
+async function saveActivityFull(id){
+  const name=document.getElementById('a_name')?.value.trim();
+  if(!name){alert('Please enter an activity name.');return}
+
+  const categoryIds=[...document.querySelectorAll('.activity-category:checked')].map(x=>x.value);
+  const imageRows=[...document.querySelectorAll('.activity-image-row')].map((row,i)=>({
+    image_url:row.querySelector('.activity-image-url')?.value.trim(),
+    caption:row.querySelector('.activity-image-caption')?.value.trim()||null,
+    sort_order:i
+  })).filter(x=>x.image_url);
+
+  const data={
+    name,
+    category_id:categoryIds[0]||null,
+    location:document.getElementById('a_location').value.trim()||null,
+    duration_minutes:document.getElementById('a_duration').value?Number(document.getElementById('a_duration').value):null,
+    price:document.getElementById('a_price').value?Number(document.getElementById('a_price').value):null,
+    price_type:document.getElementById('a_price_type').value,
+    minimum_guests:Number(document.getElementById('a_min').value||1),
+    maximum_guests:document.getElementById('a_max').value?Number(document.getElementById('a_max').value):null,
+    pickup_available:document.getElementById('a_pickup').checked,
+    transportation_available:document.getElementById('a_transport').checked,
+    short_description:document.getElementById('a_short').value.trim()||null,
+    description:document.getElementById('a_desc').value.trim()||null,
+    terms_conditions:document.getElementById('a_terms').value.trim()||null,
+    active:document.getElementById('a_active').value==='true'
+  };
+
+  try{
+    let activityId=id;
+    let r;
+    if(id){
+      r=await sb.from('activities').update(data).eq('id',id).select('id').single();
+    }else{
+      r=await sb.from('activities').insert(data).select('id').single();
+      activityId=r.data?.id;
+    }
+    if(r.error){openModal('Could not save activity',msg(r.error.message,true));return}
+
+    const d1=await sb.from('activity_category_links').delete().eq('activity_id',activityId);
+    if(d1.error){openModal('Could not save categories',msg(d1.error.message,true));return}
+    if(categoryIds.length){
+      const rows=categoryIds.map(category_id=>({activity_id:activityId,category_id}));
+      const d2=await sb.from('activity_category_links').insert(rows);
+      if(d2.error){openModal('Could not save categories',msg(d2.error.message,true));return}
+    }
+
+    const d3=await sb.from('activity_images').delete().eq('activity_id',activityId);
+    if(d3.error){openModal('Could not save pictures',msg(d3.error.message,true));return}
+    if(imageRows.length){
+      const d4=await sb.from('activity_images').insert(imageRows.map(x=>({...x,activity_id:activityId})));
+      if(d4.error){openModal('Could not save pictures',msg(d4.error.message,true));return}
+    }
+
+    closeModal();
+    showPage('activities');
+  }catch(e){openModal('Could not save activity',msg(e.message,true))}
+}
+
+function categories(){simpleList('activity_categories',{title:'Activity Categories',select:'*',order:'created_at',headers:['Name','Description','Icon','Active','Actions'],form:'categoryForm',row:c=>`<tr><td><b>${esc(c.name)}</b></td><td>${esc(c.description||'')}</td><td>${esc(c.icon||'')}</td><td>${badge(c.active?'active':'inactive')}</td><td><button class="secondary" onclick='categoryForm(${JSON.stringify(c)})'>Edit</button></td></tr>`})}
+function categoryForm(c={}){openModal(c.id?'Edit Category':'Add Category',`<div class="grid2"><div class="field"><label>Name</label><input id="c_name" value="${esc(c.name)}"></div><div class="field"><label>Icon</label><input id="c_icon" value="${esc(c.icon)}"></div></div><div class="field"><label>Description</label><textarea id="c_desc">${esc(c.description)}</textarea></div><div class="form-actions"><button class="primary" onclick="save('activity_categories','${c.id||''}',{name:document.getElementById('c_name').value,icon:document.getElementById('c_icon').value,description:document.getElementById('c_desc').value})">Save</button></div>`)}
+
+function providers(){simpleList('activity_providers',{title:'Activity Providers',select:'*',order:'created_at',headers:['Provider','Contact','Phone','Email','Active','Actions'],form:'providerForm',row:p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.contact_name||'—')}</td><td>${esc(p.phone||'—')}</td><td>${esc(p.email||'—')}</td><td>${badge(p.active?'active':'inactive')}</td><td><button class="secondary" onclick='providerForm(${JSON.stringify(p)})'>Edit</button></td></tr>`})}
+function providerForm(p={}){openModal(p.id?'Edit Provider':'Add Provider',`<div class="grid2"><div class="field"><label>Name</label><input id="pr_name" value="${esc(p.name)}"></div><div class="field"><label>Contact name</label><input id="pr_contact" value="${esc(p.contact_name)}"></div><div class="field"><label>Phone</label><input id="pr_phone" value="${esc(p.phone)}"></div><div class="field"><label>Email</label><input id="pr_email" value="${esc(p.email)}"></div></div><div class="field"><label>Notes</label><textarea id="pr_notes">${esc(p.notes)}</textarea></div><div class="form-actions"><button class="primary" onclick="save('activity_providers','${p.id||''}',{name:document.getElementById('pr_name').value,contact_name:document.getElementById('pr_contact').value,phone:document.getElementById('pr_phone').value,email:document.getElementById('pr_email').value,notes:document.getElementById('pr_notes').value})">Save</button></div>`)}
+
+async function activityBookings(){const {data,error}=await sb.from('activity_bookings').select('*,activities(name),guest_profiles(full_name),guest_bookings(booking_reference)').order('scheduled_at',{ascending:false});if(error){document.getElementById('content').innerHTML=msg(error.message,true);return}document.getElementById('content').innerHTML=`<div class="section"><div class="section-head"><h2>Activity Bookings</h2></div>${table(['Date','Activity','Guest','Pax','Price','Status','Reference'],(data||[]).map(b=>`<tr><td>${fmtDate(b.scheduled_at)}</td><td>${esc(b.activities?.name)}</td><td>${esc(b.guest_profiles?.full_name||'—')}</td><td>${b.number_of_guests}</td><td>${money(b.total_price??b.unit_price)}</td><td>${badge(b.status)}</td><td>${esc(b.guest_bookings?.booking_reference||'—')}</td></tr>`).join(''))}</div>`}
+async function payments(){const {data,error}=await sb.from('payments').select('*,trips(booking_reference,pickup_location,destination_location),profiles:collected_by(full_name)').order('collected_at',{ascending:false});if(error){document.getElementById('content').innerHTML=msg(error.message,true);return}document.getElementById('content').innerHTML=`<div class="section"><div class="section-head"><h2>Payments</h2></div>${table(['Date','Trip','Amount','Method','Collected By','Notes'],(data||[]).map(p=>`<tr><td>${fmtDate(p.collected_at)}</td><td>${esc(p.trips?.booking_reference||p.trip_id)}</td><td>${money(p.amount)}</td><td>${esc(p.payment_method)}</td><td>${esc(p.profiles?.full_name||'—')}</td><td>${esc(p.notes||'')}</td></tr>`).join(''))}</div>`}
+async function outstanding(){const {data,error}=await sb.from('outstanding_payments').select('*,trips(booking_reference,pickup_location,destination_location) ').order('created_at',{ascending:false});if(error){document.getElementById('content').innerHTML=msg(error.message,true);return}document.getElementById('content').innerHTML=`<div class="section"><div class="section-head"><h2>Outstanding Payments</h2></div>${table(['Trip','Due','Collected','Balance','Return','Status','Notes'],(data||[]).map(o=>`<tr><td>${esc(o.trips?.booking_reference||o.trip_id)}</td><td>${money(o.amount_due)}</td><td>${money(o.amount_collected)}</td><td>${money(Math.max(0,Number(o.amount_due)-Number(o.amount_collected)))}</td><td>${o.due_on_return?'Yes':'No'}</td><td>${badge(o.status)}</td><td>${esc(o.notes||'')}</td></tr>`).join(''))}</div>`}
+async function cash(){const {data,error}=await sb.from('cash_sessions').select('*,profiles:driver_id(full_name)').order('business_date',{ascending:false});if(error){document.getElementById('content').innerHTML=msg(error.message,true);return}const sessions=data||[];const open=sessions.filter(c=>!c.closed_at).length;const variance=sessions.filter(c=>c.closed_at).reduce((a,c)=>a+Number(c.variance||0),0);const expected=sessions.filter(c=>c.closed_at).reduce((a,c)=>a+Number(c.expected_closing_cash||0),0);document.getElementById('content').innerHTML=`<div class="metric-grid"><div class="metric"><span class="muted">Cash Sessions</span><b>${sessions.length}</b></div><div class="metric"><span class="muted">Open Sessions</span><b>${open}</b></div><div class="metric"><span class="muted">Closed Expected</span><b>${money(expected)}</b></div><div class="metric"><span class="muted">Total Variance</span><b>${money(variance)}</b></div></div><div style="height:10px"></div><div class="section"><div class="section-head"><h2>Driver Cash Sessions</h2></div>${table(['Date','Driver','Opening','Expected','Declared','Variance','Status'],sessions.map(c=>`<tr><td>${dateOnly(c.business_date)}</td><td>${esc(c.profiles?.full_name||'—')}</td><td>${money(c.opening_cash)}</td><td>${money(c.expected_closing_cash)}</td><td>${money(c.declared_closing_cash)}</td><td>${money(c.variance)}</td><td>${c.closed_at?badge('closed'):badge('open')}</td></tr>`).join(''))}</div>`}
+async function expenses(){const {data,error}=await sb.from('expenses').select('*,profiles:driver_id(full_name)').order('created_at',{ascending:false});if(error){document.getElementById('content').innerHTML=msg(error.message,true);return}document.getElementById('content').innerHTML=`<div class="section"><div class="section-head"><h2>Expenses</h2></div>${table(['Date','Driver','Amount','Category','Description'],(data||[]).map(e=>`<tr><td>${fmtDate(e.created_at)}</td><td>${esc(e.profiles?.full_name||'—')}</td><td>${money(e.amount)}</td><td>${esc(e.category)}</td><td>${esc(e.description||'')}</td></tr>`).join(''))}</div>`}
+async function reports(){
+  const c=document.getElementById('content');
+  const now=new Date(); const startDefault=new Date(now); startDefault.setDate(1); startDefault.setHours(0,0,0,0);
+  c.innerHTML=`<div class="section"><div class="section-head"><div><h2>Reports & Analytics</h2><div class="muted">Analyze trips, collections, expenses and cash performance.</div></div></div>
+  <div class="grid3" style="margin-top:12px"><div class="field"><label>From</label><input id="rep_from" type="date" value="${dateInput(startDefault)}"></div><div class="field"><label>To</label><input id="rep_to" type="date" value="${dateInput(now)}"></div><div class="field" style="display:flex;align-items:end"><button class="primary" onclick="loadReports()">Run Report</button></div></div></div>
+  <div id="reportBody"><div class="empty">Choose a date range and click Run Report.</div></div>`;
+  loadReports();
+}
+function dateInput(d){return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)}
+async function loadReports(){
+  const from=document.getElementById('rep_from')?.value, to=document.getElementById('rep_to')?.value;
+  if(!from||!to)return; if(to<from){alert('The end date must be on or after the start date.');return}
+  const start=new Date(from+'T00:00:00'), end=new Date(to+'T23:59:59.999');
+  const body=document.getElementById('reportBody'); body.innerHTML='<div class="section"><div class="muted">Loading report…</div></div>';
+  const [tr,pa,ex,cs,outs]=await Promise.all([
+    sb.from('trips').select('id,booking_reference,scheduled_at,status,price,payment_status,payment_due_on_return,passenger_count,vehicle_id').gte('scheduled_at',start.toISOString()).lte('scheduled_at',end.toISOString()),
+    sb.from('payments').select('id,trip_id,amount,payment_method,collected_by,collected_at').gte('collected_at',start.toISOString()).lte('collected_at',end.toISOString()),
+    sb.from('expenses').select('id,driver_id,amount,category,created_at').gte('created_at',start.toISOString()).lte('created_at',end.toISOString()),
+    sb.from('cash_sessions').select('id,driver_id,business_date,opening_cash,expected_closing_cash,declared_closing_cash,variance,opened_at,closed_at').gte('business_date',from).lte('business_date',to),
+    sb.from('outstanding_payments').select('amount_due,amount_collected,status,due_on_return,created_at,updated_at').neq('status','paid')
+  ]);
+  const err=[tr,pa,ex,cs,outs].find(x=>x.error); if(err){body.innerHTML=msg(err.error.message,true);return}
+  const trips=tr.data||[], payments=pa.data||[], expensesData=ex.data||[], sessions=cs.data||[], outstanding=outs.data||[];
+  const tripValue=trips.reduce((a,x)=>a+Number(x.price||0),0), collected=payments.reduce((a,x)=>a+Number(x.amount||0),0), expensesTotal=expensesData.reduce((a,x)=>a+Number(x.amount||0),0);
+  const completed=trips.filter(x=>x.status==='completed').length, cancelled=trips.filter(x=>x.status==='cancelled').length;
+  const cashCollected=payments.filter(x=>String(x.payment_method).toLowerCase()==='cash').reduce((a,x)=>a+Number(x.amount||0),0);
+  const cardCollected=payments.filter(x=>String(x.payment_method).toLowerCase()==='card').reduce((a,x)=>a+Number(x.amount||0),0);
+  const otherCollected=collected-cashCollected-cardCollected;
+  const openSessions=sessions.filter(x=>!x.closed_at).length, variance=sessions.filter(x=>x.closed_at).reduce((a,x)=>a+Number(x.variance||0),0);
+  const outstandingTotal=outstanding.reduce((a,x)=>a+Math.max(0,Number(x.amount_due||0)-Number(x.amount_collected||0)),0);
+  const net=collected-expensesTotal;
+  const avg=trips.length?tripValue/trips.length:0;
+  const statusRows=['scheduled','assigned','accepted','en_route','arrived','passenger_onboard','completed','cancelled'].map(st=>{const n=trips.filter(x=>x.status===st).length;return `<tr><td>${esc(st.replaceAll('_',' '))}</td><td>${n}</td><td>${trips.length?((n/trips.length)*100).toFixed(1)+'%':'0%'}</td></tr>`}).join('');
+  const payRows=[['Cash',cashCollected],['Card',cardCollected],['Other',otherCollected]].map(x=>`<tr><td>${x[0]}</td><td>${money(x[1])}</td><td>${collected?((x[1]/collected)*100).toFixed(1)+'%':'0%'}</td></tr>`).join('');
+  const expenseByCat={}; expensesData.forEach(x=>{expenseByCat[x.category]=(expenseByCat[x.category]||0)+Number(x.amount||0)});
+  const expenseRows=Object.entries(expenseByCat).sort((a,b)=>b[1]-a[1]).map(x=>`<tr><td>${esc(x[0])}</td><td>${money(x[1])}</td></tr>`).join('')||'<tr><td colspan="2" class="empty">No expenses.</td></tr>';
+  body.innerHTML=`<div class="cards"><div class="card"><div class="muted">Trip Value</div><div class="metric">${money(tripValue)}</div></div><div class="card"><div class="muted">Payments Collected</div><div class="metric">${money(collected)}</div></div><div class="card"><div class="muted">Expenses</div><div class="metric">${money(expensesTotal)}</div></div><div class="card"><div class="muted">Net Collected</div><div class="metric">${money(net)}</div></div><div class="card"><div class="muted">Trips</div><div class="metric">${trips.length}</div></div><div class="card"><div class="muted">Avg Trip Value</div><div class="metric">${money(avg)}</div></div></div>
+  <div class="cards" style="margin-top:13px"><div class="card"><div class="muted">Completed</div><div class="metric">${completed}</div></div><div class="card"><div class="muted">Cancelled</div><div class="metric">${cancelled}</div></div><div class="card"><div class="muted">Outstanding</div><div class="metric">${money(outstandingTotal)}</div></div><div class="card"><div class="muted">Cash Variance</div><div class="metric">${money(variance)}</div></div><div class="card"><div class="muted">Open Cash Sessions</div><div class="metric">${openSessions}</div></div></div>
+  <div class="grid2" style="margin-top:13px"><div class="section"><div class="section-head"><h2>Payment Methods</h2></div>${table(['Method','Collected','Share'],payRows)}</div><div class="section"><div class="section-head"><h2>Trip Status</h2></div>${table(['Status','Trips','Share'],statusRows)}</div></div>
+  <div class="grid2" style="margin-top:13px"><div class="section"><div class="section-head"><h2>Expenses by Category</h2></div>${table(['Category','Amount'],expenseRows)}</div><div class="section"><div class="section-head"><h2>Cash Reconciliation</h2></div>${table(['Metric','Value'],`<tr><td>Closed sessions</td><td>${sessions.filter(x=>x.closed_at).length}</td></tr><tr><td>Open sessions</td><td>${openSessions}</td></tr><tr><td>Expected closing cash</td><td>${money(sessions.filter(x=>x.closed_at).reduce((a,x)=>a+Number(x.expected_closing_cash||0),0))}</td></tr><tr><td>Declared closing cash</td><td>${money(sessions.filter(x=>x.closed_at).reduce((a,x)=>a+Number(x.declared_closing_cash||0),0))}</td></tr><tr><td>Total variance</td><td>${money(variance)}</td></tr>`)}</div></div>`;
+}
+function pricing(){simpleList('pricing_rules',{title:'Pricing Rules',select:'*',order:'created_at',headers:['Origin','Destination','Pax','One Way','Round Trip','Night Surcharge','Active','Actions'],form:'pricingForm',row:p=>`<tr><td>${esc(p.origin_zone)}</td><td>${esc(p.destination_zone)}</td><td>${p.min_passengers}–${p.max_passengers}</td><td>${money(p.one_way_price)}</td><td>${money(p.round_trip_price)}</td><td>${money(p.night_surcharge)}</td><td>${badge(p.active?'active':'inactive')}</td><td><button class="secondary" onclick='pricingForm(${JSON.stringify(p)})'>Edit</button></td></tr>`})}
+function pricingForm(p={}){openModal(p.id?'Edit Pricing Rule':'Add Pricing Rule',`<div class="grid2"><div class="field"><label>Origin zone</label><input id="r_o" value="${esc(p.origin_zone)}"></div><div class="field"><label>Destination zone</label><input id="r_d" value="${esc(p.destination_zone)}"></div><div class="field"><label>Min passengers</label><input id="r_min" type="number" value="${p.min_passengers??1}"></div><div class="field"><label>Max passengers</label><input id="r_max" type="number" value="${p.max_passengers??99}"></div><div class="field"><label>One-way price</label><input id="r_one" type="number" step=".01" value="${p.one_way_price??0}"></div><div class="field"><label>Round-trip price</label><input id="r_round" type="number" step=".01" value="${p.round_trip_price??''}"></div><div class="field"><label>Night surcharge</label><input id="r_night" type="number" step=".01" value="${p.night_surcharge??0}"></div></div><div class="form-actions"><button class="primary" onclick="save('pricing_rules','${p.id||''}',{origin_zone:document.getElementById('r_o').value,destination_zone:document.getElementById('r_d').value,min_passengers:Number(document.getElementById('r_min').value||1),max_passengers:Number(document.getElementById('r_max').value||99),one_way_price:Number(document.getElementById('r_one').value||0),round_trip_price:document.getElementById('r_round').value?Number(document.getElementById('r_round').value):null,night_surcharge:Number(document.getElementById('r_night').value||0)})">Save</button></div>`)}
+
+function destinations(){simpleList('destinations',{title:'Destinations',select:'*',order:'created_at',headers:['Name','Zone','Active','Actions'],form:'destinationForm',row:d=>`<tr><td><b>${esc(d.name)}</b></td><td>${esc(d.zone||'—')}</td><td>${badge(d.active?'active':'inactive')}</td><td><button class="secondary" onclick='destinationForm(${JSON.stringify(d)})'>Edit</button></td></tr>`})}
+function destinationForm(d={}){openModal(d.id?'Edit Destination':'Add Destination',`<div class="grid2"><div class="field"><label>Name</label><input id="z_name" value="${esc(d.name)}"></div><div class="field"><label>Zone</label><input id="z_zone" value="${esc(d.zone)}"></div></div><div class="form-actions"><button class="primary" onclick="save('destinations','${d.id||''}',{name:document.getElementById('z_name').value,zone:document.getElementById('z_zone').value})">Save</button></div>`)}
+
+let liveMap=null,liveMarkers={},liveTimer=null,liveChannel=null;
+function gpsAge(v){if(!v)return {text:'No update',stale:true};const ms=Date.now()-new Date(v).getTime(),mins=Math.max(0,Math.round(ms/60000));return {text:mins<1?'Just now':mins+' min ago',stale:mins>5};}
+function gpsIcon(stale){const bg=stale?'#c62828':'#1456d9';return L.divIcon({className:'',html:`<div style="width:30px;height:30px;border-radius:50%;background:${bg};border:4px solid white;box-shadow:0 2px 8px #0005;display:grid;place-items:center;color:white">●</div>`,iconSize:[30,30],iconAnchor:[15,15]});}
+async function live(){
+ document.getElementById('content').innerHTML=`<div class="section"><div class="section-head"><h2>Live Driver Locations</h2><button class="secondary" onclick="loadLiveDrivers()">Refresh</button></div><div class="muted">Live positions reported from the Driver App. Locations older than 5 minutes are marked stale.</div><div id="liveMap" style="height:520px;border-radius:12px;overflow:hidden;margin-top:12px"></div><div id="liveList" style="margin-top:12px"></div></div>`;
+ liveMap=L.map('liveMap').setView([18.04,-63.05],12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(liveMap);setTimeout(()=>liveMap.invalidateSize(),50);
+ await loadLiveDrivers();if(liveTimer)clearInterval(liveTimer);liveTimer=setInterval(loadLiveDrivers,15000);if(liveChannel)sb.removeChannel(liveChannel);liveChannel=sb.channel('management-driver-locations').on('postgres_changes',{event:'*',schema:'public',table:'driver_locations'},()=>loadLiveDrivers()).subscribe();
+}
+async function loadLiveDrivers(){if(currentPage!=='live')return;const r=await sb.from('driver_locations').select('driver_id,latitude,longitude,accuracy,speed,heading,last_seen_at,updated_at,profiles(full_name,phone,active)').order('last_seen_at',{ascending:false});if(r.error){document.getElementById('liveList').innerHTML=msg(r.error.message,true);return}const rows=r.data||[],seen=new Set();rows.forEach(x=>{if(x.latitude==null||x.longitude==null)return;const age=gpsAge(x.last_seen_at||x.updated_at),id=x.driver_id;seen.add(id);const lat=Number(x.latitude),lng=Number(x.longitude);const popup=`<div style="min-width:190px"><b>${esc(x.profiles?.full_name||'Driver')}</b><br>${esc(x.profiles?.phone||'')}<hr><b>GPS:</b> ${age.text}<br><b>Accuracy:</b> ${x.accuracy!=null?Math.round(Number(x.accuracy))+' m':'—'}<br><b>Speed:</b> ${x.speed!=null?(Math.max(0,Number(x.speed)*3.6)).toFixed(1)+' km/h':'—'}<br><b>Heading:</b> ${x.heading!=null?Math.round(Number(x.heading))+'°':'—'}</div>`;if(!liveMarkers[id])liveMarkers[id]=L.marker([lat,lng],{icon:gpsIcon(age.stale)}).addTo(liveMap);else{liveMarkers[id].setLatLng([lat,lng]);liveMarkers[id].setIcon(gpsIcon(age.stale));}liveMarkers[id].bindPopup(popup)});Object.keys(liveMarkers).forEach(id=>{if(!seen.has(id)){liveMap.removeLayer(liveMarkers[id]);delete liveMarkers[id]}});document.getElementById('liveList').innerHTML=rows.length?`<div class="table-wrap"><table class="table"><thead><tr><th>Driver</th><th>Location</th><th>Accuracy</th><th>Speed</th><th>Last Update</th><th>Status</th></tr></thead><tbody>${rows.map(x=>{const age=gpsAge(x.last_seen_at||x.updated_at);return `<tr><td><b>${esc(x.profiles?.full_name||'Driver')}</b><div class="muted">${esc(x.profiles?.phone||'')}</div></td><td>${Number(x.latitude).toFixed(5)}, ${Number(x.longitude).toFixed(5)}</td><td>${x.accuracy!=null?Math.round(Number(x.accuracy))+' m':'—'}</td><td>${x.speed!=null?(Math.max(0,Number(x.speed)*3.6)).toFixed(1)+' km/h':'—'}</td><td>${age.text}<div class="muted">${fmtDate(x.last_seen_at||x.updated_at)}</div></td><td>${age.stale?badge('stale'):badge('active')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty">No driver locations received yet.</div>'}
+const pages={dashboard,dispatch,trips,live,drivers,guests,properties,vehicles,activities,categories,providers,activityBookings,payments,outstanding,cash,expenses,reports,pricing,destinations};
+sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT')location.reload()});
+init();
+</script>
+</body>
+</html>
