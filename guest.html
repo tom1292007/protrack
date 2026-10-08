@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ProTrack Guest</title>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#f6f7f9;color:#17202a}
+header{background:#111827;color:#fff;padding:18px 20px;position:sticky;top:0;z-index:5}
+.header{max-width:1100px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.logo{font-size:22px;font-weight:800}.tag{font-size:12px;opacity:.75}
+main{max-width:1100px;margin:auto;padding:22px 16px 80px}
+.hero{background:#111827;color:white;border-radius:20px;padding:28px;margin-bottom:22px}
+.hero h1{margin:0 0 8px;font-size:30px}.hero p{margin:0;color:#d1d5db}
+.nav{display:flex;gap:8px;overflow:auto;margin-bottom:18px}.nav button{white-space:nowrap;border:0;background:#fff;border-radius:999px;padding:10px 15px;cursor:pointer}.nav button.active{background:#111827;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.activity-content{display:flex;gap:16px;align-items:stretch;min-height:100%}.activity-info{flex:1;min-width:0;display:flex;flex-direction:column}.activity-image{width:150px;height:auto;min-height:100%;object-fit:cover;border-radius:10px;display:block;background:#eef2f7;flex:0 0 130px}.activity-card{cursor:pointer}.activity-card:hover{box-shadow:0 4px 18px #00000018}.activity-detail-page{display:none}.activity-detail-page.show{display:block}.detail-page-card{background:#fff;border:1px solid #e5e7eb;border-radius:20px;padding:24px;box-shadow:0 2px 10px #0000000b}.detail-page-top{display:flex;gap:24px;align-items:stretch}.detail-page-cover{width:42%;min-height:360px;object-fit:cover;border-radius:16px}.detail-page-info{flex:1}.detail-page-description{font-size:16px;line-height:1.75;color:#374151;white-space:pre-line;margin:22px 0}.detail-page-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0}.detail-page-gallery img{width:100%;height:230px;object-fit:cover;border-radius:14px}.detail-page-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}.detail-hero{display:flex;gap:20px;align-items:flex-start}.detail-main{flex:1}.detail-cover{width:280px;height:220px;object-fit:cover;border-radius:14px}.detail-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.detail-gallery img{width:100%;height:180px;object-fit:cover;border-radius:12px}.detail-gallery figure{margin:0}.detail-gallery figcaption{font-size:12px;color:#6b7280;margin-top:5px}.detail-categories{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 14px}.card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px #0000000b;border:1px solid #e5e7eb}
+.card h3{margin:0 0 7px}.muted{color:#6b7280;font-size:13px}.price{font-size:21px;font-weight:800;margin:12px 0}.pill{display:inline-block;padding:5px 9px;border-radius:999px;background:#eef2ff;font-size:12px;margin:3px 3px 0 0}
+button.primary{background:#111827;color:#fff;border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer}
+button.secondary{background:#eef2f7;color:#111827;border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.form{max-width:720px}.field{margin:12px 0}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}.field input,.field textarea,.field select{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;font:inherit;background:#fff}.field textarea{min-height:90px}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:18px;z-index:20}.modal.show{display:flex}.modalbox{background:#fff;border-radius:18px;padding:22px;max-width:600px;width:100%;max-height:90vh;overflow:auto}
+.notice{padding:12px;border-radius:10px;background:#f3f4f6;font-size:13px;margin-bottom:14px}.success{background:#ecfdf5;color:#065f46}.error{background:#fef2f2;color:#991b1b}
+.booking-item{border-bottom:1px solid #e5e7eb;padding:12px 0}.booking-item:last-child{border:0}
+.empty{padding:30px;text-align:center;color:#6b7280;background:#fff;border-radius:16px}
+@media(max-width:700px){.hero h1{font-size:25px}.header{align-items:flex-start}.grid{grid-template-columns:1fr}.activity-image{width:100px;flex-basis:100px}.detail-page-top{flex-direction:column}.detail-page-cover{width:100%;min-height:240px;height:240px}.detail-page-gallery{grid-template-columns:1fr 1fr}.detail-page-gallery img{height:180px}.detail-hero{flex-direction:column}.detail-cover{width:100%;height:220px}.detail-gallery{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header><div class="header"><div><div class="logo">ProTrack</div><div class="tag">Guest Services</div></div><button class="secondary" onclick="show('home')">Home</button></div></header>
+<main>
+<section id="home">
+<div class="hero"><h1>Everything you need during your stay.</h1><p>Book transportation, discover activities and send requests directly to our team.</p></div>
+<div class="nav" id="categoryNav"><button class="active" onclick="filterCategory('all',this)">All</button></div>
+<div id="activities" class="grid"><div class="empty">Loading activities…</div></div>
+</section>
+
+<section id="activityDetail" class="activity-detail-page">
+<div class="row" style="margin-bottom:16px;justify-content:flex-start"><button class="secondary" onclick="backToActivities()">← Back to Activities</button></div>
+<div id="activityDetailContent"></div>
+</section>
+
+<section id="ride" style="display:none">
+<div class="hero"><h1>Book a Ride</h1><p>Request airport transfers and local transportation.</p></div>
+<div class="card form">
+<div class="field"><label>Pickup</label><input id="r_pickup" placeholder="e.g. Princess Juliana International Airport"></div>
+<div class="field"><label>Destination</label><input id="r_destination" placeholder="e.g. Maho"></div>
+<div class="field"><label>Date & time</label><input id="r_time" type="datetime-local"></div>
+<div class="field"><label>Passengers</label><input id="r_pax" type="number" min="1" value="2"></div>
+<div class="field"><label>Ride type</label><select id="r_type"><option value="one_way">One way</option><option value="round_trip">Round trip</option></select></div>
+<div class="field"><label>Special instructions</label><textarea id="r_notes" placeholder="Flight number, luggage, child seat, etc."></textarea></div>
+<button class="primary" onclick="openGuestForm('ride')">Continue</button>
+</div>
+</section>
+
+<section id="bookings" style="display:none">
+<div class="hero"><h1>My Booking</h1><p>Enter your booking reference to check your request.</p></div>
+<div class="card form">
+<div class="field"><label>Booking reference</label><input id="lookup_ref" placeholder="PTG-..."></div>
+<button class="primary" onclick="lookupBooking()">Find Booking</button>
+<div id="lookup_result" style="margin-top:16px"></div>
+</div>
+</section>
+</main>
+
+<div class="modal" id="modal"><div class="modalbox"><div class="row"><h2 id="modalTitle" style="margin-top:0">Request</h2><button class="secondary" onclick="closeModal()">Close</button></div><div id="modalBody"></div></div></div>
+
+<script>
+const sb=supabase.createClient(window.PROTRACK_CONFIG.supabaseUrl,window.PROTRACK_CONFIG.supabaseKey);
+let activities=[], categories=[], pendingItem=null, selectedCategory='all';
+
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function money(v){return v==null?'Price on request':`$${Number(v).toFixed(2)}`}
+function show(id){['home','ride','bookings','activityDetail'].forEach(x=>document.getElementById(x).style.display=x===id?'block':'none');window.scrollTo(0,0)}
+function backToActivities(){show('home');document.getElementById('activityDetailContent').innerHTML=''}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+function openModal(title,body){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modal').classList.add('show')}
+
+async function loadCatalog(){
+ const [a,c]=await Promise.all([
+   sb.rpc('get_guest_activities_catalog'),
+   sb.from('activity_categories').select('id,name,description').eq('active',true).order('name')
+ ]);
+ if(a.error){document.getElementById('activities').innerHTML=`<div class="empty error">Could not load activities: ${esc(a.error.message)}</div>`;return}
+ activities=a.data||[];categories=c.data||[];
+ const nav=document.getElementById('categoryNav');
+ nav.innerHTML='<button class="active" onclick="filterCategory(\'all\',this)">All</button>'+categories.map(x=>`<button onclick="filterCategory('${x.id}',this)">${esc(x.name)}</button>`).join('');
+ renderActivities();
+}
+function filterCategory(id,btn){selectedCategory=id;document.querySelectorAll('#categoryNav button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderActivities()}
+function renderActivities(){
+ const list=selectedCategory==='all'?activities:activities.filter(a=>(a.category_ids||[]).includes(selectedCategory));
+ const el=document.getElementById('activities');
+ if(!list.length){el.innerHTML='<div class="empty">No activities available in this category yet.</div>';return}
+ el.innerHTML=list.map(a=>`<div class="card activity-card" onclick="showActivityDetails('${a.id}')">
+   <div class="activity-content"><div class="activity-info">
+   <div class="row"><div>${(a.category_names||[]).map(n=>`<span class="pill">${esc(n)}</span>`).join('')}</div>${a.pickup_available?'<span class="pill">Pickup available</span>':''}</div>
+   <h3>${esc(a.name)}</h3>
+   <div class="muted">${esc(a.location||'')} ${a.duration_minutes?`· ${a.duration_minutes} min`:''}</div>
+   <p>${esc(a.short_description||a.description||'')}</p>
+   <div class="price">${money(a.price)} <span class="muted">${a.price_type==='per_person'?'per person':''}</span></div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="primary" onclick="event.stopPropagation();startActivity('${a.id}')">Book Now</button><button class="secondary" onclick="event.stopPropagation();showActivityDetails('${a.id}')">Details</button></div>
+   </div>${a.image_url?`<img class="activity-image" src="${esc(a.image_url)}" alt="${esc(a.name)}" loading="lazy" onerror="this.style.display='none'">`:''}</div>
+ </div>`).join('')
+}
+async function showActivityDetails(id){
+ show('activityDetail');
+ const el=document.getElementById('activityDetailContent');
+ el.innerHTML='<div class="empty">Loading activity…</div>';
+ const r=await sb.rpc('get_guest_activity_detail',{p_activity_id:id});
+ if(r.error){el.innerHTML=`<div class="empty error">Could not load activity: ${esc(r.error.message)}</div>`;return}
+ const a=r.data;if(!a){el.innerHTML='<div class="empty">Activity not found.</div>';return}
+ const imgs=a.images||[];
+ const cats=a.categories||[];
+ const cover=a.image_url;
+ const gallery=imgs.length?`<div class="detail-page-gallery">${imgs.map(im=>`<div><img src="${esc(im.image_url)}" alt="${esc(a.name)}" loading="lazy" onerror="this.style.display='none'"><div class="muted" style="margin-top:5px">${esc(im.caption||'')}</div></div>`).join('')}</div>`:'';
+ el.innerHTML=`<div class="detail-page-card">
+   <div class="detail-page-top">
+     ${cover?`<img class="detail-page-cover" src="${esc(cover)}" alt="${esc(a.name)}">`:''}
+     <div class="detail-page-info">
+       <div class="detail-categories">${cats.map(c=>`<span class="pill">${esc(c.name)}</span>`).join('')}</div>
+       <h1 style="margin:8px 0">${esc(a.name)}</h1>
+       <div class="muted">${esc(a.location||'')} ${a.duration_minutes?`· ${a.duration_minutes} min`:''}</div>
+       <div class="price">${money(a.price)} <span class="muted">${a.price_type==='per_person'?'per person':'per booking'}</span></div>
+       <p style="font-size:16px;line-height:1.6">${esc(a.short_description||'')}</p>
+       <div>${a.pickup_available?'<span class="pill">Pickup available</span>':''}${a.transportation_available?'<span class="pill">Transportation available</span>':''}</div>
+       <div class="detail-page-actions"><button class="primary" onclick="bookActivityFromDetail('${a.id}')">Book Now</button><button class="secondary" onclick="backToActivities()">← Back</button></div>
+     </div>
+   </div>
+   <div class="detail-page-description"><h2>About this activity</h2>${esc(a.description||a.short_description||'')}</div>
+   ${a.terms_conditions?`<div class="detail-page-description"><h2>Terms & Conditions</h2><div style="white-space:pre-wrap">${esc(a.terms_conditions)}</div></div>`:''}
+   ${gallery}
+   <div class="detail-page-actions"><button class="primary" onclick="bookActivityFromDetail('${a.id}')">Book Now</button><button class="secondary" onclick="backToActivities()">← Back to Activities</button></div>
+ </div>`;
+}
+function bookActivityFromDetail(id){
+ const a=activities.find(x=>x.id===id);
+ if(a){pendingItem={type:'activity',activity:a};openGuestForm('activity');}
+ else{showActivityDetails(id);}
+}
+function startActivity(id){
+ const a=activities.find(x=>x.id===id); if(a){pendingItem={type:'activity',activity:a};openGuestForm('activity');return}
+ showActivityDetails(id).then(()=>{});
+}
+function openGuestForm(type){
+ if(type==='ride'){
+   pendingItem={type:'ride',data:{pickup:document.getElementById('r_pickup').value.trim(),destination:document.getElementById('r_destination').value.trim(),scheduled_at:document.getElementById('r_time').value,passengers:Number(document.getElementById('r_pax').value||1),ride_type:document.getElementById('r_type').value,notes:document.getElementById('r_notes').value.trim()}};
+   if(!pendingItem.data.pickup||!pendingItem.data.destination||!pendingItem.data.scheduled_at){alert('Please enter pickup, destination and date/time.');return}
+ } else {
+   const a=pendingItem.activity;
+   openModal('Book '+a.name,guestFormHTML(a));return;
+ }
+ openModal('Guest Details',guestFormHTML());
+}
+function guestFormHTML(activity){
+ return `<div class="notice">Your request will be sent to the ProTrack team for confirmation. ${activity?`<b>${esc(activity.name)}</b>`:''}</div>
+ <div class="field"><label>Full name *</label><input id="g_name" autocomplete="name"></div>
+ <div class="field"><label>Email</label><input id="g_email" type="email" autocomplete="email"></div>
+ <div class="field"><label>Phone</label><input id="g_phone" autocomplete="tel"></div>
+ <div class="field"><label>Room number</label><input id="g_room"></div>
+ ${activity?`<div class="field"><label>Number of guests</label><input id="a_guests" type="number" min="${activity.minimum_guests||1}" ${activity.maximum_guests?`max="${activity.maximum_guests}"`:''} value="${activity.minimum_guests||1}"></div>
+ <div class="field"><label>Preferred date & time</label><input id="a_time" type="datetime-local"></div>
+ <div class="field"><label>Special requests</label><textarea id="a_notes"></textarea></div>`:''}
+ <button class="primary" onclick="submitGuestRequest()">Submit Request</button>`;
+}
+async function submitGuestRequest(){
+ const name=document.getElementById('g_name')?.value.trim(),email=document.getElementById('g_email')?.value.trim(),phone=document.getElementById('g_phone')?.value.trim(),room=document.getElementById('g_room')?.value.trim();
+ if(!name){alert('Please enter your name.');return}
+ const guest={full_name:name,email:email||null,phone:phone||null,room_number:room||null,active:true};
+ const gp=await sb.from('guest_profiles').insert(guest).select('id').single();
+ if(gp.error){showError(gp.error.message);return}
+ const guestId=gp.data.id;
+ const item=pendingItem;
+ let description='',activityId=null,scheduledAt=null,qty=1,unit=0,total=0,special='';
+ if(item.type==='activity'){
+   const a=item.activity; activityId=a.id; qty=Number(document.getElementById('a_guests').value||1);unit=Number(a.price||0);total=unit*qty;scheduledAt=document.getElementById('a_time').value||null;special=document.getElementById('a_notes').value.trim();description=a.name;
+ }else{
+   const d=item.data;description=`Ride: ${d.pickup} → ${d.destination} (${d.ride_type})`;scheduledAt=d.scheduled_at;qty=d.passengers;special=d.notes;total=0;
+ }
+ const gb=await sb.from('guest_bookings').insert({guest_id:guestId,status:'requested',total_amount:total,payment_status:'unpaid',special_requests:special||null}).select('id,booking_reference').single();
+ if(gb.error){showError(gb.error.message);return}
+ const bi=await sb.from('booking_items').insert({booking_id:gb.data.id,item_type:item.type==='activity'?'activity':'ride',activity_id:activityId,description,quantity:qty,unit_price:unit,total_price:total,scheduled_at:scheduledAt,status:'requested'}); 
+ if(bi.error){showError(bi.error.message);return}
+ closeModal(); pendingItem=null;
+ openModal('Request received',`<div class="notice success"><h3>Thank you, ${esc(name)}!</h3><p>Your request has been received.</p><p><b>Booking reference: ${esc(gb.data.booking_reference)}</b></p><p>The ProTrack team will confirm the booking.</p></div><button class="primary" onclick="closeModal()">Done</button>`);
+}
+function showError(msg){openModal('Could not submit',`<div class="notice error">${esc(msg)}</div><p class="muted">If this keeps happening, the ProTrack database permissions for guest bookings need to be enabled.</p>`)}
+async function lookupBooking(){
+ const ref=document.getElementById('lookup_ref').value.trim(); if(!ref)return;
+ const el=document.getElementById('lookup_result');el.innerHTML='Searching…';
+ const r=await sb.from('guest_bookings').select('booking_reference,status,total_amount,payment_status,created_at,booking_items(description,quantity,unit_price,total_price,scheduled_at,status)').eq('booking_reference',ref).maybeSingle();
+ if(r.error){el.innerHTML=`<div class="notice error">${esc(r.error.message)}</div>`;return}
+ if(!r.data){el.innerHTML='<div class="notice">No booking found.</div>';return}
+ el.innerHTML=`<div class="card"><div class="row"><b>${esc(r.data.booking_reference)}</b><span class="pill">${esc(r.data.status)}</span></div><p>Payment: <b>${esc(r.data.payment_status)}</b></p>${(r.data.booking_items||[]).map(i=>`<div class="booking-item"><b>${esc(i.description)}</b><br><span class="muted">${i.quantity} × ${money(i.unit_price)} · ${esc(i.status)}</span></div>`).join('')}</div>`;
+}
+document.addEventListener('DOMContentLoaded',()=>loadCatalog());
+</script>
+</body>
+</html>
