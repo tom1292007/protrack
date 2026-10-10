@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ProTrack Guest</title>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--ink:#142b35;--muted:#687d83;--teal:#087f83;--teal-dark:#075b60;--sea:#e6f5f3;--coral:#ff876e;--sand:#f7f5f0;--line:#e4ecea;--white:#fff;--shadow:0 14px 40px rgba(21,54,61,.08);--radius:22px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f7f9f8;color:var(--ink);-webkit-font-smoothing:antialiased}button,input,textarea,select{font:inherit}button{transition:transform .18s ease,box-shadow .18s ease,background .18s ease}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #71c8c5;outline-offset:2px}
+header{background:rgba(255,255,255,.94);backdrop-filter:blur(16px);border-bottom:1px solid rgba(220,233,230,.9);position:sticky;top:0;z-index:10;padding:0 24px}.header{max-width:1220px;min-height:78px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:24px}.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}.brand-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(135deg,var(--teal),#20a6a0);color:#fff;font-weight:900;font-size:19px;box-shadow:0 7px 18px #087f8330}.logo{font-size:20px;letter-spacing:-.7px;font-weight:850}.tag{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:.08em;text-transform:uppercase}.header-actions{display:flex;align-items:center;gap:8px}.header-link{border:0;background:transparent;color:#426068;border-radius:12px;padding:11px 14px;font-weight:700;cursor:pointer}.header-link:hover{background:var(--sea);color:var(--teal-dark)}
+main{max-width:1220px;margin:auto;padding:30px 24px 90px}.hero{position:relative;overflow:hidden;isolation:isolate;background:linear-gradient(118deg,#103b45 0%,#075e66 58%,#087f83 100%);color:white;border-radius:30px;padding:clamp(30px,5vw,58px);margin-bottom:38px;min-height:290px;display:flex;align-items:center;justify-content:space-between;gap:32px;box-shadow:0 24px 60px rgba(7,95,102,.18)}.hero:before,.hero:after{content:"";position:absolute;z-index:-1;border-radius:50%;pointer-events:none}.hero:before{width:420px;height:420px;right:-85px;top:-190px;border:1px solid #ffffff22;box-shadow:0 0 0 35px #ffffff08,0 0 0 80px #ffffff06}.hero:after{width:270px;height:270px;right:15%;bottom:-220px;background:#5bd1bf1c}.hero-copy{max-width:660px}.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#b6eeea;margin-bottom:18px}.eyebrow-dot{width:7px;height:7px;background:var(--coral);border-radius:50%;box-shadow:0 0 0 5px #ff876e24}.hero h1{margin:0 0 16px;font-size:clamp(34px,4.4vw,54px);line-height:1.06;letter-spacing:-1.8px;max-width:650px}.hero p{margin:0;color:#d3e9e8;font-size:16px;line-height:1.75;max-width:570px}.hero-cta{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:27px}.hero-aside{flex:0 0 220px;max-width:220px;border:1px solid #ffffff28;background:#ffffff10;backdrop-filter:blur(8px);padding:21px;border-radius:22px}.hero-aside-icon{width:43px;height:43px;border-radius:14px;background:#ffffff18;display:grid;place-items:center;font-size:23px;margin-bottom:18px}.hero-aside strong{display:block;font-size:17px;line-height:1.35}.hero-aside span{display:block;color:#c4e6e3;font-size:13px;line-height:1.6;margin-top:7px}
+button.primary{background:var(--teal);color:#fff;border:1px solid var(--teal);border-radius:13px;padding:12px 17px;font-weight:750;cursor:pointer;box-shadow:0 6px 16px #087f8320}button.primary:hover{background:var(--teal-dark);border-color:var(--teal-dark);transform:translateY(-1px);box-shadow:0 9px 20px #087f8330}.hero button.primary{background:#fff;color:var(--teal-dark);border-color:#fff;box-shadow:none}.hero button.primary:hover{background:#e6f5f3}.hero .hero-secondary{background:#ffffff10;color:#fff;border:1px solid #ffffff45;box-shadow:none}.hero .hero-secondary:hover{background:#ffffff1c}.button-arrow{display:inline-block;margin-left:8px;font-size:17px;vertical-align:-1px}
+.catalog-head{display:flex;justify-content:space-between;align-items:end;gap:18px;margin:0 0 18px}.section-kicker{color:var(--teal);font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.15em;margin-bottom:8px}.section-title{font-size:clamp(25px,3vw,34px);letter-spacing:-1px;margin:0}.section-subtitle{color:var(--muted);margin:8px 0 0;font-size:14px;line-height:1.6}.catalog-count{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;color:#587078;font-size:12px;font-weight:750}.catalog-tools{display:flex;gap:14px;align-items:center;margin:24px 0 16px}.search-wrap{position:relative;flex:1;max-width:420px}.search-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:#7b9295;font-size:17px;pointer-events:none}.search-input{width:100%;padding:13px 16px 13px 43px;border:1px solid #dce8e5;border-radius:14px;background:#fff;color:var(--ink);font:inherit;box-shadow:0 3px 12px #15363d05}.search-input:focus{border-color:#78bfbb;box-shadow:0 0 0 4px #087f8312;outline:none}.nav{display:flex;gap:8px;overflow:auto;padding:2px 1px 10px;margin-bottom:22px;scrollbar-width:thin}.nav button{white-space:nowrap;border:1px solid #e0eae7;background:#fff;color:#547078;border-radius:999px;padding:10px 15px;cursor:pointer;font-size:13px;font-weight:750}.nav button:hover{border-color:#a9d7d2;background:#f2fbf9}.nav button.active{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:0 5px 13px #142b3520}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.activity-card{cursor:pointer;background:#fff;border:1px solid #e2ece9;border-radius:22px;padding:0;overflow:hidden;box-shadow:0 5px 18px rgba(21,54,61,.035);transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;min-width:0}.activity-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#c5e1dc}.activity-content{display:flex;gap:0;align-items:stretch;min-height:100%;height:100%}.activity-info{flex:1;min-width:0;display:flex;flex-direction:column;padding:22px}.activity-image{width:38%;height:auto;min-height:100%;object-fit:cover;display:block;background:#e8f0ed;flex:0 0 38%;align-self:stretch}.activity-info .row{align-items:flex-start;gap:7px}.card h3{margin:12px 0 8px;font-size:19px;line-height:1.32;letter-spacing:-.35px}.muted{color:var(--muted);font-size:12px;line-height:1.55}.activity-info>p{font-size:13px;line-height:1.7;color:#60757a;margin:12px 0 0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.price{font-size:22px;font-weight:850;letter-spacing:-.5px;margin:15px 0 0;color:var(--ink)}.price .muted{font-weight:500;letter-spacing:0}.pill{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border-radius:999px;background:#edf7f5;color:#267a78;font-size:10px;font-weight:800;margin:2px 3px 2px 0;line-height:1.2}.activity-times{margin:13px 0 0;padding:11px 12px;border-radius:13px;background:#f3f8f7;border:1px solid #e3efec;font-size:12px;line-height:1.65;white-space:pre-line;color:#46656a}.activity-times b{font-size:11px;color:#315b60}.activity-card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:17px}.activity-card-actions button{font-size:12px;padding:10px 12px;border-radius:11px}.activity-card-actions .secondary{background:#f2f6f5;color:#35545a;border:1px solid #e2ece9}.activity-card-actions .secondary:hover{background:#e7f3f0}.empty{padding:35px;text-align:center;color:var(--muted);background:#fff;border:1px dashed #d6e5e1;border-radius:18px;grid-column:1/-1}.empty.error{background:#fff3f1;color:#9d3e31;border-color:#f3c6be}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 5px 18px rgba(21,54,61,.035)}
+.activity-detail-page{display:none}.detail-page-card{background:#fff;border:1px solid var(--line);border-radius:26px;padding:clamp(18px,3vw,34px);box-shadow:var(--shadow)}.detail-page-top{display:flex;gap:30px;align-items:stretch}.detail-page-cover{width:43%;min-height:370px;max-height:560px;object-fit:cover;border-radius:20px;background:#e8f0ed}.detail-page-info{flex:1;min-width:0;padding:8px 0}.detail-page-info h1{font-size:clamp(28px,3.5vw,42px);letter-spacing:-1.2px;line-height:1.12}.detail-categories{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 14px}.detail-page-info>.muted{font-size:13px}.detail-page-info>p{color:#5b7177;line-height:1.75}.detail-activity-times{font-size:14px;margin-top:18px;padding:15px}.detail-page-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}.detail-page-description{font-size:15px;line-height:1.85;color:#4f666c;white-space:pre-line;margin:30px 0}.detail-page-description h2{color:var(--ink);font-size:22px;letter-spacing:-.5px;margin:0 0 12px}.detail-page-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:24px 0}.detail-page-gallery img{width:100%;height:230px;object-fit:cover;border-radius:16px;cursor:zoom-in;transition:transform .18s ease,filter .18s ease;background:#e8f0ed}.detail-page-gallery img:hover{transform:scale(1.015);filter:saturate(1.05)}.detail-page-gallery .muted{padding:4px 3px}.image-lightbox{position:fixed;inset:0;background:rgba(5,20,25,.94);display:none;align-items:center;justify-content:center;padding:24px;z-index:100}.image-lightbox.show{display:flex}.image-lightbox img{max-width:95vw;max-height:85vh;object-fit:contain;border-radius:12px}.lightbox-close{position:absolute;top:18px;right:18px;background:#fff;color:var(--ink);border:0;border-radius:50%;width:46px;height:46px;font-size:28px;cursor:pointer}.lightbox-caption{position:absolute;bottom:14px;left:20px;right:20px;text-align:center;color:#fff;font-size:13px}
+button.secondary{background:#eff5f3;color:#31535a;border:1px solid #e1ece8;border-radius:12px;padding:11px 15px;font-weight:750;cursor:pointer}button.secondary:hover{background:#e5f1ee}button:disabled{opacity:.5;cursor:not-allowed}.time-slot-buttons{display:flex;flex-wrap:wrap;gap:9px;margin-top:9px}.time-slot-button{border:1px solid #d8e5e2;background:#fff;color:#33555b;border-radius:12px;padding:11px 16px;font:inherit;font-weight:750;cursor:pointer;transition:background .15s,border-color .15s,color .15s;min-width:100px}.time-slot-button:hover{border-color:var(--teal);background:#f0faf8}.time-slot-button.selected{background:var(--teal);color:#fff;border-color:var(--teal);box-shadow:0 0 0 3px #087f8318}.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.form{max-width:760px}.field{margin:16px 0}.field label{display:block;font-size:12px;font-weight:800;color:#45636a;margin-bottom:7px}.field input,.field textarea,.field select{width:100%;padding:13px 14px;border:1px solid #d9e5e2;border-radius:12px;font:inherit;background:#fff;color:var(--ink)}.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:#79c1bc;box-shadow:0 0 0 4px #087f8310}.field textarea{min-height:100px;resize:vertical}.modal{position:fixed;inset:0;background:rgba(7,29,34,.55);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}.modal.show{display:flex}.modalbox{background:#fff;border:1px solid #e1ece8;border-radius:24px;padding:clamp(18px,3vw,28px);max-width:620px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 25px 90px #061c2240}.modalbox h2{font-size:23px;letter-spacing:-.5px}.notice{padding:14px 15px;border-radius:13px;background:#f1f7f6;border:1px solid #e1eeeb;font-size:13px;line-height:1.65;margin-bottom:14px;color:#49646a}.notice p{margin:8px 0}.notice.success{background:#edf9f3;color:#176445;border-color:#d5efdf}.notice.error{background:#fff1ef;color:#9d3e31;border-color:#f5d2cc}.booking-item{border-bottom:1px solid #e7efed;padding:14px 0}.booking-item:last-child{border:0}.form.card{padding:24px;border-radius:22px;box-shadow:var(--shadow)}
+@media(max-width:900px){main{padding:24px 18px 70px}.hero{padding:34px;min-height:0}.hero-aside{flex-basis:190px}.grid{gap:14px}.activity-info{padding:18px}.activity-image{width:34%;flex-basis:34%}.detail-page-top{gap:22px}.detail-page-cover{min-height:320px}}
+@media(max-width:680px){header{padding:0 14px}.header{min-height:70px;gap:10px}.brand-mark{width:38px;height:38px;border-radius:12px}.logo{font-size:18px}.tag{font-size:9px}.header-actions{gap:2px}.header-link{font-size:12px;padding:10px 9px}.header-link:first-child{display:none}main{padding:18px 13px 56px}.hero{border-radius:23px;padding:27px 23px;margin-bottom:30px;display:block}.hero h1{font-size:36px;letter-spacing:-1.3px}.hero p{font-size:14px}.hero-aside{display:none}.hero-cta{margin-top:21px}.catalog-head{align-items:flex-start;flex-direction:column;gap:12px}.catalog-tools{margin-top:20px}.search-wrap{max-width:none;width:100%}.nav{margin-right:-13px;padding-right:13px}.grid{grid-template-columns:1fr;gap:14px}.activity-info{padding:18px}.activity-image{width:36%;flex-basis:36%;min-height:100%}.card h3{font-size:17px}.activity-info>p{-webkit-line-clamp:3;font-size:12px}.price{font-size:20px}.activity-card-actions{padding-top:14px}.activity-card-actions button{padding:10px 11px}.detail-page-card{padding:16px;border-radius:21px}.detail-page-top{flex-direction:column;gap:18px}.detail-page-cover{width:100%;height:245px;min-height:245px;max-height:300px;border-radius:16px}.detail-page-info h1{font-size:30px}.detail-page-gallery{grid-template-columns:1fr 1fr;gap:9px}.detail-page-gallery img{height:155px;border-radius:12px}.detail-page-description{margin:24px 0;font-size:14px}.detail-page-description h2{font-size:20px}.detail-page-actions{margin-top:18px}.form.card{padding:17px}.modalbox{border-radius:20px}.time-slot-button{min-width:calc(50% - 5px);flex:1}.empty{padding:26px 18px}}
+@media(max-width:390px){.hero h1{font-size:31px}.header-link{padding:9px 7px;font-size:11px}.activity-image{width:32%;flex-basis:32%}.activity-info{padding:14px}.pill{font-size:9px;padding:5px 7px}.activity-card-actions button{font-size:11px}}
+
+/* Uber-inspired transport booking UI, matched to ProTrack's teal/coral identity */
+.transport-page{--transport-border:#e2ece9}.transport-intro{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:24px;background:linear-gradient(118deg,#103b45 0%,#075e66 58%,#087f83 100%);color:#fff;border-radius:26px;padding:clamp(25px,4vw,42px);margin-bottom:22px;min-height:190px;box-shadow:0 18px 42px rgba(7,95,102,.15)}.transport-intro:before{content:"";position:absolute;width:290px;height:290px;border:1px solid #ffffff25;border-radius:50%;right:35px;top:-160px;box-shadow:0 0 0 30px #ffffff08,0 0 0 65px #ffffff06;pointer-events:none}.transport-intro-copy{position:relative;z-index:1;max-width:650px}.transport-intro .eyebrow{margin-bottom:10px}.transport-intro h1{font-size:clamp(30px,4vw,43px);letter-spacing:-1.3px;line-height:1.08;margin:0 0 10px}.transport-intro p{font-size:14px;line-height:1.65;color:#d3e9e8;margin:0;max-width:540px}.transport-intro-art{position:relative;flex:0 0 170px;height:120px;border-radius:20px;background:#ffffff0c;border:1px solid #ffffff20;overflow:hidden}.transport-art-road{position:absolute;width:240px;height:100px;border:3px dashed #ffffff45;border-radius:50%;transform:rotate(-28deg);left:-40px;top:34px}.transport-art-pin{position:absolute;right:25px;top:18px;background:#fff;color:var(--teal-dark);border-radius:14px 14px 14px 4px;width:39px;height:39px;display:grid;place-items:center;font-size:20px;font-weight:900;box-shadow:0 7px 20px #082f3530}.transport-art-car{position:absolute;left:24px;bottom:22px;width:38px;height:38px;border-radius:12px;background:var(--coral);color:#fff;display:grid;place-items:center;font-size:19px;box-shadow:0 7px 20px #082f3530}.transport-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(285px,.75fr);gap:20px;align-items:start}.transport-form-card{padding:clamp(18px,3vw,30px);border-radius:24px}.transport-step-heading{display:flex;align-items:center;gap:12px;margin:2px 0 17px}.transport-step-number{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;background:var(--sea);color:var(--teal-dark);border:1px solid #d1eae5;border-radius:12px;font-weight:850}.transport-step-heading h2{font-size:18px;letter-spacing:-.35px;margin:0}.transport-step-heading p{margin:4px 0 0;color:var(--muted);font-size:12px;line-height:1.5}.transport-type-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.transport-type-option{position:relative;min-width:0;min-height:112px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:14px 12px;background:#fff;border:1px solid #dfe9e6;border-radius:16px;color:var(--ink);cursor:pointer}.transport-type-option:hover{border-color:#9dcfca;background:#f8fcfb}.transport-type-option.active{border:1.5px solid var(--teal);background:#f0faf8;box-shadow:0 0 0 3px #087f830e}.transport-type-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:#edf6f4;color:var(--teal-dark);font-size:19px;font-weight:800}.transport-type-option b{display:block;font-size:12px;line-height:1.35}.transport-type-option small{display:block;color:var(--muted);font-size:10px;line-height:1.4;margin-top:4px}.transport-type-check{position:absolute;right:10px;top:10px;width:19px;height:19px;border-radius:50%;background:#e7efed;color:transparent;display:grid;place-items:center;font-size:11px}.transport-type-option.active .transport-type-check{background:var(--teal);color:white}.transport-kind-accessible{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important}.transport-divider{height:1px;background:#e8efed;margin:24px 0}.transport-fields-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 16px}.transport-fields-grid .field{min-width:0;margin-bottom:13px}.transport-fields-grid .field label{font-size:12px;font-weight:800;color:#34535a;margin-bottom:7px}.transport-fields-grid input:not([type=checkbox]),.transport-fields-grid select,.transport-fields-grid textarea{width:100%;min-height:46px;padding:12px 13px;border:1px solid #dce7e4;border-radius:12px;background:#fbfdfc;color:var(--ink);font-size:13px;transition:border-color .18s,box-shadow .18s}.transport-fields-grid textarea{min-height:88px;resize:vertical}.transport-fields-grid input:focus,.transport-fields-grid select:focus,.transport-fields-grid textarea:focus{outline:none;border-color:#78bfbb;box-shadow:0 0 0 4px #087f8312;background:#fff}.transport-field-help{display:block;font-size:11px;margin-top:6px;color:#7b8e91;line-height:1.45}.transport-notes-field{grid-column:1/-1}.transport-checkbox-field{display:flex;align-items:center}.transport-checkbox-field label{display:flex!important;align-items:center;gap:9px;background:#f7faf9;border:1px solid #e3ece9;padding:13px;border-radius:12px;width:100%;min-height:46px}.transport-checkbox-field input{accent-color:var(--teal)}.transport-summary-column{position:sticky;top:96px;display:grid;gap:14px}.transport-summary-card{border:1px solid #dfe9e6;background:#fff;border-radius:24px;padding:22px;box-shadow:0 10px 28px rgba(21,54,61,.06)}.transport-summary-top{display:flex;align-items:center;gap:12px;padding-bottom:18px;border-bottom:1px solid #e9f0ee}.transport-summary-icon{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--teal),#20a6a0);color:white;display:grid;place-items:center;font-size:22px;font-weight:800}.transport-summary-top b{display:block;font-size:15px}.transport-summary-top small{display:block;color:var(--muted);font-size:11px;margin-top:4px}.transport-route-preview{position:relative;display:flex;gap:14px;padding:21px 0 19px;border-bottom:1px solid #e9f0ee}.transport-route-dot{position:absolute;left:2px;width:10px;height:10px;border-radius:50%;z-index:1}.transport-route-dot.start{top:27px;background:var(--teal);box-shadow:0 0 0 4px #e5f5f2}.transport-route-dot.end{top:89px;background:var(--coral);box-shadow:0 0 0 4px #fff0ed}.transport-route-line{position:absolute;left:6px;top:40px;height:43px;border-left:2px dashed #bfd4d0}.transport-route-labels{display:grid;gap:20px;padding-left:24px;min-width:0;width:100%}.transport-route-labels small{display:block;color:#8a9b9d;font-size:9px;font-weight:850;letter-spacing:.12em;margin-bottom:5px}.transport-route-labels b{display:block;font-size:12px;line-height:1.4;overflow-wrap:anywhere}.transport-summary-meta{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #eef2f1;font-size:12px;color:var(--muted)}.transport-summary-meta b{color:var(--ink);text-align:right;font-size:12px}.transport-fare-block{padding:18px 0 13px}.transport-fare-amount{font-size:35px;letter-spacing:-1.2px;font-weight:900;line-height:1.2;margin:5px 0;color:var(--ink)}.transport-fare-note{font-size:11px;color:var(--muted);line-height:1.55}.transport-availability{background:#f3f8f7;border-radius:11px;padding:11px 12px;font-size:11px;line-height:1.5;margin:0 0 14px}.transport-submit{width:100%;display:flex;align-items:center;justify-content:space-between;padding:15px 17px!important;border-radius:14px!important;font-size:14px}.transport-trust-note{display:flex;align-items:flex-start;gap:8px;color:#6d8285;font-size:10px;line-height:1.55;margin-top:13px}.transport-trust-note>span:first-child{display:grid;place-items:center;width:17px;height:17px;flex:0 0 17px;border-radius:50%;background:#e7f5f1;color:var(--teal-dark);font-weight:900}.transport-help-card{display:flex;gap:11px;align-items:flex-start;background:#f2f8f6;border:1px solid #e0eeea;border-radius:17px;padding:15px}.transport-help-icon{width:28px;height:28px;flex:0 0 28px;display:grid;place-items:center;border-radius:9px;background:#fff;color:var(--teal);font-weight:900}.transport-help-card b{font-size:12px}.transport-help-card p{font-size:11px;line-height:1.55;color:var(--muted);margin:5px 0 0}.transport-result .notice{margin:0 0 14px}.transport-result .notice h3{margin-top:0}.transport-result:empty{display:none}
+@media(max-width:900px){.transport-layout{grid-template-columns:minmax(0,1fr)}.transport-summary-column{position:static;grid-row:1}.transport-summary-card{padding:18px}.transport-route-preview{padding:15px 0}.transport-route-dot.start{top:21px}.transport-route-dot.end{top:83px}.transport-route-line{top:34px}.transport-intro-art{flex-basis:130px}.transport-intro-art{height:110px}}
+@media(max-width:560px){.transport-intro{padding:24px 20px;min-height:0;border-radius:22px}.transport-intro-art{display:none}.transport-intro h1{font-size:31px}.transport-type-choices{grid-template-columns:1fr;gap:8px}.transport-type-option{min-height:0;flex-direction:row;align-items:center;padding:11px 12px;gap:11px}.transport-type-option>span:nth-child(2){flex:1}.transport-type-option small{font-size:11px}.transport-type-icon{flex:0 0 35px}.transport-fields-grid{grid-template-columns:minmax(0,1fr);gap:0}.transport-notes-field{grid-column:auto}.transport-form-card{padding:18px}.transport-summary-card{border-radius:20px}.transport-fare-amount{font-size:31px}.transport-summary-column{gap:10px}}
+
+</style>
+</head>
+<body>
+<header><div class="header"><a class="brand" href="#" onclick="show('home');return false" aria-label="ProTrack Guest Services home"><div class="brand-mark">P</div><div><div class="logo">ProTrack</div><div class="tag">Guest services · SXM</div></div></a><nav class="header-actions" aria-label="Main navigation"><button class="header-link" onclick="show('home')">Explore</button><button class="header-link" onclick="show('ride')">Book a ride</button><button class="primary" onclick="show('bookings')">My booking</button></nav></div></header>
+<main>
+<section id="home">
+<div class="hero"><div class="hero-copy"><div class="eyebrow"><span class="eyebrow-dot"></span> Your island, your way</div><h1>Make your stay<br>unforgettable.</h1><p>From turquoise-water adventures to effortless island transfers, discover experiences that make Saint-Martin and Sint Maarten special.</p><div class="hero-cta"><button class="primary" onclick="document.getElementById('catalogSection').scrollIntoView({behavior:'smooth'})">Explore experiences <span class="button-arrow">↘</span></button><button class="secondary hero-secondary" onclick="show('ride')">Arrange a ride</button></div></div><div class="hero-aside"><div class="hero-aside-icon">✦</div><strong>Discover more of the island</strong><span>Handpicked experiences, local highlights and easy booking requests in one place.</span></div></div>
+<div id="catalogSection">
+<div class="catalog-head"><div><div class="section-kicker">The island is yours to explore</div><h2 class="section-title">Find your next experience</h2><p class="section-subtitle">Browse local adventures, boat trips, culture and more.</p></div><div id="catalogCount" class="catalog-count">Loading experiences…</div></div>
+<div class="catalog-tools"><div class="search-wrap"><span class="search-icon">⌕</span><input id="activitySearch" class="search-input" type="search" placeholder="Search activities, places or experiences…" aria-label="Search activities" oninput="renderActivities()"></div></div>
+<div class="nav" id="categoryNav" aria-label="Filter activities by category"><button class="active" onclick="filterCategory('all',this)">All experiences</button></div>
+<div id="activities" class="grid"><div class="empty">Loading experiences…</div></div>
+</div>
+</section>
+
+<section id="activityDetail" class="activity-detail-page">
+<div class="row" style="margin-bottom:16px;justify-content:flex-start"><button class="secondary" onclick="backToActivities()">← Back to Activities</button></div>
+<div id="activityDetailContent"></div>
+</section>
+
+<section id="ride" class="transport-page" style="display:none">
+<div class="transport-intro"><div class="transport-intro-copy"><div class="eyebrow"><span class="eyebrow-dot"></span> Get around with ease</div><h1>Where can we take you?</h1><p>Choose your ride, set your pickup time, and request your transfer in just a few steps.</p></div><div class="transport-intro-art" aria-hidden="true"><div class="transport-art-road"></div><div class="transport-art-pin">↗</div><div class="transport-art-car">✦</div></div></div>
+<div class="transport-layout">
+<div class="card form transport-form-card" id="transportBookingCard">
+<div class="transport-step-heading"><span class="transport-step-number">1</span><div><h2>Choose your ride</h2><p>What kind of transfer do you need?</p></div></div>
+<div class="transport-type-choices" role="group" aria-label="Choose transfer type">
+<button type="button" class="transport-type-option active" data-kind="airport_scheduled" onclick="trChooseKind('airport_scheduled')"><span class="transport-type-icon">✈</span><span><b>Airport shuttle</b><small>Scheduled · Complimentary</small></span><span class="transport-type-check">✓</span></button>
+<button type="button" class="transport-type-option" data-kind="airport_custom" onclick="trChooseKind('airport_custom')"><span class="transport-type-icon">◷</span><span><b>Customer airport pick-up/drop-off</b><small>Choose your own time</small></span><span class="transport-type-check">✓</span></button>
+<button type="button" class="transport-type-option" data-kind="point_to_point" onclick="trChooseKind('point_to_point')"><span class="transport-type-icon">↗</span><span><b>Point-to-point</b><small>Pay per transfer</small></span><span class="transport-type-check">✓</span></button>
+</div>
+<select id="tr_kind" aria-label="Transfer type" class="transport-kind-accessible"><option value="airport_scheduled">Complimentary airport shuttle · scheduled departure</option><option value="airport_custom">Customer airport pick-up/drop-off · custom time</option><option value="point_to_point">Paid point-to-point transfer</option></select>
+<div class="transport-divider"></div>
+<div class="transport-step-heading"><span class="transport-step-number">2</span><div><h2>Trip details</h2><p id="tr_trip_subtitle">Choose the shuttle direction and departure time.</p></div></div>
+<div class="transport-fields-grid">
+<div class="field" id="tr_direction_field"><label for="tr_direction">Airport transfer</label><select id="tr_direction"><option value="arrival">Pick me up at the airport</option><option value="departure">Take me to the airport</option></select></div>
+<div class="field" id="tr_route_field" style="display:none;grid-column:1/-1"><label>Where are you travelling?</label><div class="transport-fields-grid" style="margin-top:8px"><div class="field"><label for="tr_pt_origin">Departure point</label><select id="tr_pt_origin"><option value="">Select departure point</option></select></div><div class="field"><label for="tr_pt_destination">Arrival location</label><select id="tr_pt_destination"><option value="">Select arrival location</option></select></div></div><div id="tr_route_match_note" class="muted transport-field-help">Choose your departure and arrival separately. The fare is based on the zones assigned to each location.</div></div>
+<div class="field" id="tr_date_field"><label for="tr_date">Shuttle date</label><input id="tr_date" type="date"></div>
+<div class="field" id="tr_slot_field"><label for="tr_slot">Departure time · island time</label><select id="tr_slot"></select></div>
+<div class="field" id="tr_custom_time_field" style="display:none"><label for="tr_custom_time">Pickup date and time</label><input id="tr_custom_time" type="datetime-local"></div>
+<div class="field"><label for="tr_passengers">Passengers</label><select id="tr_passengers"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select><small class="transport-field-help">Up to 8 passengers per transfer</small></div>
+<div class="field" id="tr_arrival_field"><label for="tr_arrival_flight">Arrival flight number</label><input id="tr_arrival_flight" maxlength="40" placeholder="e.g. AA1234"></div>
+<div class="field" id="tr_departure_field" style="display:none"><label for="tr_departure_flight">Departure flight number</label><input id="tr_departure_flight" maxlength="40" placeholder="e.g. AA1235"></div>
+<div class="field" id="tr_origin_field"><label for="tr_origin">Pickup location</label><input id="tr_origin" required maxlength="180" placeholder="Airport, hotel or property" autocomplete="off"><small id="tr_origin_hint" class="transport-field-help">Where should we pick you up?</small></div>
+<div class="field" id="tr_destination_field"><label for="tr_destination">Destination</label><input id="tr_destination" required maxlength="180" placeholder="Hotel, property or destination" autocomplete="off"><small id="tr_destination_hint" class="transport-field-help">Where would you like to go?</small></div>
+</div>
+<div class="transport-divider"></div>
+<div class="transport-step-heading"><span class="transport-step-number">3</span><div><h2>Your details</h2><p>So our team can coordinate your transfer.</p></div></div>
+<div class="transport-fields-grid">
+<div class="field"><label for="tr_name">Full name *</label><input id="tr_name" required maxlength="120" autocomplete="name" placeholder="Name of the guest"></div>
+<div class="field"><label for="tr_phone">Mobile / WhatsApp number *</label><input id="tr_phone" required maxlength="50" autocomplete="tel" placeholder="Include country code"></div>
+<div class="field"><label for="tr_room_number">Room number (optional)</label><input id="tr_room_number" maxlength="40" autocomplete="off" placeholder="Enter your room number"><small class="transport-field-help">Helps our team identify your room or property reservation.</small></div>
+<div class="field" id="tr_waiting_field" style="display:none"><label for="tr_waiting">Waiting time (minutes)</label><input id="tr_waiting" type="number" min="0" max="1440" step="15" value="0"></div>
+<div class="field" id="tr_stops_field" style="display:none"><label for="tr_stops">Extra stops</label><input id="tr_stops" type="number" min="0" max="20" value="0"></div>
+<div class="field transport-checkbox-field" id="tr_special_field" style="display:none"><label><input id="tr_special" type="checkbox" style="width:auto"> I need a special service</label></div>
+<div class="field transport-notes-field"><label for="tr_notes">Notes for the driver (optional)</label><textarea id="tr_notes" maxlength="1000" placeholder="Luggage, child seats or other details"></textarea></div>
+</div>
+<div id="tr_result" class="transport-result" style="margin-top:14px"></div>
+</div>
+<aside class="transport-summary-column">
+<div class="transport-summary-card">
+<div class="transport-summary-top"><span class="transport-summary-icon">↗</span><div><b>Your ride summary</b><small>Review before requesting</small></div></div>
+<div class="transport-route-preview"><div class="transport-route-dot start"></div><div class="transport-route-line"></div><div class="transport-route-dot end"></div><div class="transport-route-labels"><div><small>FROM</small><b id="tr_summary_origin">Airport pickup</b></div><div><small>TO</small><b id="tr_summary_destination">Your destination</b></div></div></div>
+<div class="transport-summary-meta"><span>Ride type</span><b id="tr_summary_kind">Airport shuttle</b></div><div class="transport-summary-meta"><span>Passengers</span><b id="tr_summary_passengers">2 passengers</b></div><div class="transport-summary-meta"><span>Pickup time</span><b id="tr_summary_time">Choose a time</b></div><div class="transport-summary-meta" id="tr_summary_extras_row" style="display:none"><span>Extras</span><b id="tr_summary_extras">None</b></div>
+<div class="transport-fare-block"><div class="muted">Estimated fare</div><div id="tr_fare" class="transport-fare-amount">$—</div><div id="tr_fare_note" class="transport-fare-note">Loading transport rates…</div></div>
+<div id="tr_availability" class="transport-availability muted">Choose a pickup time to check availability.</div>
+<button class="primary transport-submit" id="tr_submit" onclick="submitTransportRequest()"><span>Request transfer</span><span>→</span></button>
+<div class="transport-trust-note"><span>✓</span><span>Your request is sent to our team. The ride is confirmed only after Management approval.</span></div>
+</div>
+<div class="transport-help-card"><span class="transport-help-icon">ⓘ</span><div><b>Need help?</b><p>Submit your request and our team will review the details and confirm availability.</p></div></div>
+</aside>
+</div>
+</section>
+<section id="bookings" style="display:none">
+<div class="hero"><div class="hero-copy"><div class="eyebrow"><span class="eyebrow-dot"></span> Your trip, at a glance</div><h1>Your booking,<br>made simple.</h1><p>Enter your booking reference to check the latest status of your request.</p></div></div>
+<div class="card form">
+<div class="field"><label>Booking reference</label><input id="lookup_ref" placeholder="PTG-..."></div>
+<button class="primary" onclick="lookupBooking()">Find Booking</button>
+<div id="lookup_result" style="margin-top:16px"></div>
+</div>
+</section>
+</main>
+<div id="imageLightbox" class="image-lightbox" onclick="closeImageLightbox()" role="dialog" aria-modal="true" aria-label="Expanded activity picture"><button class="lightbox-close" onclick="event.stopPropagation();closeImageLightbox()" aria-label="Close">×</button><img id="lightboxImage" src="" alt="Expanded activity picture" onclick="event.stopPropagation()"><div id="lightboxCaption" class="lightbox-caption"></div></div>
+
+<div class="modal" id="modal"><div class="modalbox"><div class="row"><h2 id="modalTitle" style="margin-top:0">Request</h2><button class="secondary" onclick="closeModal()">Close</button></div><div id="modalBody"></div></div></div>
+
+<script>
+const sb=supabase.createClient(window.PROTRACK_CONFIG.supabaseUrl,window.PROTRACK_CONFIG.supabaseKey);
+let activities=[], categories=[], pendingItem=null, selectedCategory='all', defaultActivityDepositPercentage=30;
+
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function money(v){return v==null?'Price on request':`$${Number(v).toFixed(2)}`}
+function formatActivityTime(v){if(!v)return '';const m=String(v).match(/^(\d{1,2}):(\d{2})/);if(!m)return String(v);let h=Number(m[1]);const min=m[2];const suffix=h>=12?'PM':'AM';h=h%12||12;return `${h}:${min} ${suffix}`}
+function show(id){['home','ride','bookings','activityDetail'].forEach(x=>document.getElementById(x).style.display=x===id?'block':'none');window.scrollTo(0,0)}
+function backToActivities(){show('home');document.getElementById('activityDetailContent').innerHTML=''}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+function openModal(title,body){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modal').classList.add('show')}
+
+async function loadCatalog(){
+ const [a,c,settings]=await Promise.all([
+   sb.rpc('get_guest_activities_catalog'),
+   sb.from('activity_categories').select('id,name,description').eq('active',true).order('name'),
+   sb.from('activity_payment_settings').select('default_deposit_percentage').eq('id',1).maybeSingle()
+ ]);
+ if(!settings.error && settings.data && settings.data.default_deposit_percentage!=null)defaultActivityDepositPercentage=Number(settings.data.default_deposit_percentage);
+ if(a.error){document.getElementById('activities').innerHTML=`<div class="empty error">Could not load activities: ${esc(a.error.message)}</div>`;return}
+ activities=a.data||[];categories=c.data||[];
+ const nav=document.getElementById('categoryNav');
+ nav.innerHTML='<button class="active" onclick="filterCategory(\'all\',this)">All</button>'+categories.map(x=>`<button onclick="filterCategory('${x.id}',this)">${esc(x.name)}</button>`).join('');
+ renderActivities();
+}
+function filterCategory(id,btn){selectedCategory=id;document.querySelectorAll('#categoryNav button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderActivities()}
+function renderActivities(){
+ const query=(document.getElementById('activitySearch')?.value||'').trim().toLowerCase();
+ const categoryList=selectedCategory==='all'?activities:activities.filter(a=>(a.category_ids||[]).includes(selectedCategory));
+ const list=categoryList.filter(a=>!query||[a.name,a.location,a.short_description,a.description,...(a.category_names||[])].filter(Boolean).join(' ').toLowerCase().includes(query));
+ const el=document.getElementById('activities');
+ const count=document.getElementById('catalogCount');
+ if(count)count.textContent=`${list.length} ${list.length===1?'experience':'experiences'}`;
+ if(!list.length){el.innerHTML=`<div class="empty"><strong>No matching experiences found.</strong><div style="margin-top:7px;font-size:13px">Try another search or choose a different category.</div></div>`;return}
+ el.innerHTML=list.map(a=>`<article class="activity-card" onclick="showActivityDetails('${a.id}')" tabindex="0" role="button" aria-label="View ${esc(a.name)}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showActivityDetails('${a.id}')}" >
+   <div class="activity-content"><div class="activity-info">
+   <div class="row"><div>${(a.category_names||[]).slice(0,2).map(n=>`<span class="pill">${esc(n)}</span>`).join('')}</div>${a.pickup_available?'<span class="pill">Pickup available</span>':''}</div>
+   <h3>${esc(a.name)}</h3>
+   <div class="muted">${esc(a.location||'')} ${a.duration_minutes?`· ${a.duration_minutes} min`:''}</div>
+   ${(a.time_slots&&a.time_slots.length)||a.activity_times?`<div class="activity-times"><b>Suggested start times</b><div>${(a.time_slots||[]).map(t=>esc(formatActivityTime(t.start_time))).join(' · ')}</div>${a.activity_times?`<div style="white-space:pre-line;margin-top:4px">${esc(a.activity_times)}</div>`:''}<div class="muted" style="margin-top:5px">Times are suggestions and require availability confirmation.</div></div>`:''}
+   <p>${esc(a.short_description||a.description||'')}</p>
+   <div class="price">${money(a.price)} <span class="muted">${a.price_type==='per_person'?'per person':''}</span></div>
+   <div class="activity-card-actions"><button class="primary" onclick="event.stopPropagation();startActivity('${a.id}')">Book experience <span class="button-arrow">↗</span></button><button class="secondary" onclick="event.stopPropagation();showActivityDetails('${a.id}')">View details</button></div>
+   </div>${a.image_url?`<img class="activity-image" src="${esc(a.image_url)}" alt="${esc(a.name)}" style="object-position:${Math.max(0,Math.min(100,Number(a.image_position_x??50)))}% ${Math.max(0,Math.min(100,Number(a.image_position_y??50)))}%" loading="lazy" onerror="this.style.display='none'">`:''}</div>
+ </article>`).join('')
+}
+async function showActivityDetails(id){
+ show('activityDetail');
+ const el=document.getElementById('activityDetailContent');
+ el.innerHTML='<div class="empty">Loading activity…</div>';
+ const r=await sb.rpc('get_guest_activity_detail',{p_activity_id:id});
+ if(r.error){el.innerHTML=`<div class="empty error">Could not load activity: ${esc(r.error.message)}</div>`;return}
+ const a=r.data;if(!a){el.innerHTML='<div class="empty">Activity not found.</div>';return}
+ const imgs=a.images||[];
+ const cats=a.categories||[];
+ const catalogActivity=activities.find(x=>x.id===id)||{};
+ const activityTimes=catalogActivity.activity_times||a.activity_times||'';
+ const timeSlots=catalogActivity.time_slots||a.time_slots||[];
+ const cover=a.image_url;
+ const gallery=imgs.length?`<div class="detail-page-gallery">${imgs.map(im=>`<div><img src="${esc(im.image_url)}" alt="${esc(a.name)}" loading="lazy" onclick="openImageLightbox('${esc(im.image_url)}', '${esc(im.caption||a.name).replace(/'/g, "&#39;")}')" onerror="this.style.display='none'"><div class="muted" style="margin-top:5px">${esc(im.caption||'')}</div></div>`).join('')}</div>`:'';
+ el.innerHTML=`<div class="detail-page-card">
+   <div class="detail-page-top">
+     ${cover?`<img class="detail-page-cover" src="${esc(cover)}" alt="${esc(a.name)}" style="object-position:${Math.max(0,Math.min(100,Number(a.image_position_x??catalogActivity.image_position_x??50)))}% ${Math.max(0,Math.min(100,Number(a.image_position_y??catalogActivity.image_position_y??50)))}%">`:''}
+     <div class="detail-page-info">
+       <div class="detail-categories">${cats.map(c=>`<span class="pill">${esc(c.name)}</span>`).join('')}</div>
+       <h1 style="margin:8px 0">${esc(a.name)}</h1>
+       <div class="muted">${esc(a.location||'')} ${a.duration_minutes?`· ${a.duration_minutes} min`:''}</div>
+       ${(timeSlots.length||activityTimes)?`<div class="activity-times detail-activity-times"><b>Suggested activity times</b>${timeSlots.length?`<div>${timeSlots.map(t=>esc(formatActivityTime(t.start_time))).join(' · ')}</div>`:''}${activityTimes?`<div style="white-space:pre-line;margin-top:5px">${esc(activityTimes)}</div>`:''}<div class="muted" style="font-size:12px;margin-top:6px">These times are suggestions provided by the activity provider and do not guarantee availability. All bookings are subject to availability confirmation by our team or the provider. Your reservation is not confirmed until availability has been verified.</div></div>`:''}
+       <div class="price">${money(a.price)} <span class="muted">${a.price_type==='per_person'?'per person':'per booking'}</span></div>
+       <p style="font-size:16px;line-height:1.6">${esc(a.short_description||'')}</p>
+       <div>${a.pickup_available?'<span class="pill">Pickup available</span>':''}${a.transportation_available?'<span class="pill">Transportation available</span>':''}</div>
+       <div class="detail-page-actions"><button class="primary" onclick="bookActivityFromDetail('${a.id}')">Book Now</button><button class="secondary" onclick="backToActivities()">← Back</button></div>
+     </div>
+   </div>
+   <div class="detail-page-description"><h2>About this activity</h2>${esc(a.description||a.short_description||'')}</div>
+   ${gallery}
+   ${a.terms_conditions?`<div class="detail-page-description"><h2>Terms & Conditions</h2><div style="white-space:pre-wrap">${esc(a.terms_conditions)}</div></div>`:''}
+   <div class="detail-page-actions"><button class="primary" onclick="bookActivityFromDetail('${a.id}')">Book Now</button><button class="secondary" onclick="backToActivities()">← Back to Activities</button></div>
+ </div>`;
+}
+function openImageLightbox(url, caption=''){
+ const overlay=document.getElementById('imageLightbox');
+ document.getElementById('lightboxImage').src=url;
+ document.getElementById('lightboxCaption').textContent=caption||'';
+ overlay.classList.add('show');
+ document.body.style.overflow='hidden';
+}
+function closeImageLightbox(){
+ const overlay=document.getElementById('imageLightbox');
+ overlay.classList.remove('show');
+ document.getElementById('lightboxImage').src='';
+ document.body.style.overflow='';
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeImageLightbox()});
+function bookActivityFromDetail(id){
+ const a=activities.find(x=>x.id===id);
+ if(a){pendingItem={type:'activity',activity:a};openGuestForm('activity');}
+ else{showActivityDetails(id);}
+}
+function startActivity(id){
+ const a=activities.find(x=>x.id===id); if(a){pendingItem={type:'activity',activity:a};openGuestForm('activity');return}
+ showActivityDetails(id).then(()=>{});
+}
+function openGuestForm(type){
+ if(type==='ride'){
+   pendingItem={type:'ride',data:{pickup:document.getElementById('r_pickup').value.trim(),destination:document.getElementById('r_destination').value.trim(),scheduled_at:document.getElementById('r_time').value,passengers:Number(document.getElementById('r_pax').value||1),ride_type:document.getElementById('r_type').value,notes:document.getElementById('r_notes').value.trim()}};
+   if(!pendingItem.data.pickup||!pendingItem.data.destination||!pendingItem.data.scheduled_at){alert('Please enter pickup, destination and date/time.');return}
+ } else {
+   const a=pendingItem.activity;
+   openModal('Book '+a.name,guestFormHTML(a));return;
+ }
+ openModal('Guest Details',guestFormHTML());
+}
+function getActivityDepositPercentage(activity){
+ const override=activity?.deposit_percentage;
+ return override!==null && override!==undefined && override!=='' ? Number(override) : defaultActivityDepositPercentage;
+}
+function guestFormHTML(activity){
+ const pct=activity?getActivityDepositPercentage(activity):0;
+ const guests=activity?Number(activity.minimum_guests||1):1;
+ const total=activity?Number(activity.price||0)*guests:0;
+ const deposit=total*pct/100;
+ const balance=Math.max(0,total-deposit);
+ const availableTimeSlots=activity?.time_slots||[];
+ const timesNotice=activity&&(availableTimeSlots.length||activity.activity_times)?`<div class="notice"><b>Suggested activity times</b>${availableTimeSlots.length?`<div style="margin-top:5px">${availableTimeSlots.map(t=>esc(formatActivityTime(t.start_time))).join(' · ')}</div>`:''}${activity.activity_times?`<div style="white-space:pre-line;margin-top:5px">${esc(activity.activity_times)}</div>`:''}<p style="margin:8px 0 0">These times are suggestions provided by the activity provider and do not guarantee availability. All bookings are subject to availability confirmation by our team or the provider. Your reservation is not confirmed until availability has been verified.</p></div>`:'';
+ const paymentNotice=activity?`<div class="notice" style="margin:12px 0"><h3 style="margin:0 0 8px">Booking & Payment Conditions</h3><p>Your booking request is subject to availability confirmation by our team or the activity provider.</p><p>Once availability is confirmed, a <b>${pct.toFixed(2).replace(/\.00$/,'')}% deposit</b> of the total booking price will be required to secure your reservation.</p><p>The remaining balance must be paid <b>directly to the activity provider on the day of the activity</b>.</p><p class="muted" style="font-size:12px;margin-bottom:0">Estimated deposit and balance are shown below and update when you change the number of guests. No deposit is collected when you submit this request.</p></div>`:'';
+ return `<div class="notice">Your request will be sent to the ProTrack team for confirmation. ${activity?`<b>${esc(activity.name)}</b>`:''}</div>
+ ${timesNotice}
+ ${paymentNotice}
+ <div class="field"><label>Full name *</label><input id="g_name" autocomplete="name"></div>
+ <div class="field"><label>Email</label><input id="g_email" type="email" autocomplete="email"></div>
+ <div class="field"><label>Phone</label><input id="g_phone" autocomplete="tel"></div>
+ <div class="field"><label>Room number</label><input id="g_room"></div>
+ ${activity?`<div class="field"><label>Number of guests</label><input id="a_guests" type="number" min="${activity.minimum_guests||1}" ${activity.maximum_guests?`max="${activity.maximum_guests}"`:''} value="${activity.minimum_guests||1}" oninput="updateActivityPaymentPreview()"></div>
+ <div id="activityPaymentPreview"></div>
+ ${activity&&availableTimeSlots.length?`<div class="field"><label>Preferred date *</label><input id="a_date" type="date" min="${new Date().toISOString().slice(0,10)}" required></div><div class="field"><label>Choose a start time *</label><div class="time-slot-buttons" id="a_time_slot_buttons">${availableTimeSlots.map(t=>`<button type="button" class="time-slot-button" data-time="${esc(String(t.start_time).slice(0,5))}" onclick="selectActivityTime(this)">${esc(formatActivityTime(t.start_time))}</button>`).join('')}</div><input id="a_time_slot" type="hidden" value=""><div class="muted" style="margin-top:9px">Your selected time is a preference only and is subject to availability confirmation.</div></div>`:`<div class="field"><label>Preferred date & time</label><input id="a_time" type="datetime-local"></div>`}
+ <div class="field"><label>Special requests</label><textarea id="a_notes"></textarea></div>`:''}
+ <button class="primary" onclick="submitGuestRequest()">Submit Request</button>`;
+}
+function selectActivityTime(button){
+ const container=document.getElementById('a_time_slot_buttons');
+ if(!container)return;
+ container.querySelectorAll('.time-slot-button').forEach(b=>{
+   const selected=b===button;
+   b.classList.toggle('selected',selected);
+   b.setAttribute('aria-pressed',selected?'true':'false');
+ });
+ const input=document.getElementById('a_time_slot');
+ if(input)input.value=button.dataset.time||'';
+}
+function updateActivityPaymentPreview(){
+ const a=pendingItem?.activity;const el=document.getElementById('activityPaymentPreview');if(!a||!el)return;
+ const qty=Math.max(0,Number(document.getElementById('a_guests')?.value||0));
+ const total=a.price_type==='per_booking'?Number(a.price||0):Number(a.price||0)*qty;const pct=getActivityDepositPercentage(a);const deposit=total*pct/100;const balance=Math.max(0,total-deposit);
+ el.innerHTML=`<div class="notice"><div class="row"><span>Estimated total</span><b>${money(total)}</b></div><div class="row"><span>Deposit to confirm (${pct.toFixed(2).replace(/\.00$/,'')}%)</span><b>${money(deposit)}</b></div><div class="row"><span>Balance payable to provider</span><b>${money(balance)}</b></div></div>`;
+}
+async function submitGuestRequest(){
+ const name=document.getElementById('g_name')?.value.trim(),email=document.getElementById('g_email')?.value.trim(),phone=document.getElementById('g_phone')?.value.trim(),room=document.getElementById('g_room')?.value.trim();
+ if(!name){alert('Please enter your name.');return}
+ const bookingItem=pendingItem;
+ if(bookingItem?.type==='activity' && (bookingItem.activity?.time_slots||[]).length){
+   const requestedDate=document.getElementById('a_date')?.value||'';
+   const requestedTime=document.getElementById('a_time_slot')?.value||'';
+   if(!requestedDate||!requestedTime){alert('Please select a preferred date and activity time.');return}
+ }
+ const guest={full_name:name,email:email||null,phone:phone||null,room_number:room||null,active:true};
+ const gp=await sb.from('guest_profiles').insert(guest).select('id').single();
+ if(gp.error){showError(gp.error.message);return}
+ const guestId=gp.data.id;
+ const item=pendingItem;
+ let description='',activityId=null,scheduledAt=null,qty=1,unit=0,total=0,special='',depositPct=null,depositAmount=0,balanceDue=0;
+ if(item.type==='activity'){
+   const a=item.activity; activityId=a.id; qty=Number(document.getElementById('a_guests').value||1);unit=Number(a.price||0);total=a.price_type==='per_booking'?unit:unit*qty;
+   const chosenSlot=document.getElementById('a_time_slot')?.value||'';
+   if((a.time_slots||[]).length){
+     const chosenDate=document.getElementById('a_date')?.value||'';
+     if(!chosenDate||!chosenSlot){alert('Please select a preferred date and activity time.');return}
+     scheduledAt=`${chosenDate}T${chosenSlot}:00`;
+   }else{scheduledAt=document.getElementById('a_time')?.value||null}
+   special=document.getElementById('a_notes').value.trim();description=a.name;
+   if(chosenSlot){special=[special,`Requested activity start time: ${formatActivityTime(chosenSlot)} (subject to availability confirmation).`].filter(Boolean).join('\n\n')}
+   depositPct=getActivityDepositPercentage(a);depositAmount=Number((total*depositPct/100).toFixed(2));balanceDue=Number((total-depositAmount).toFixed(2));
+   special=[special,`Payment terms: ${depositPct}% deposit after availability confirmation (${depositAmount.toFixed(2)}); remaining ${balanceDue.toFixed(2)} payable directly to activity provider on the activity date.`].filter(Boolean).join('\n\n');
+ }else{
+   const d=item.data;description=`Ride: ${d.pickup} → ${d.destination} (${d.ride_type})`;scheduledAt=d.scheduled_at;qty=d.passengers;special=d.notes;total=0;
+ }
+ const gb=await sb.from('guest_bookings').insert({guest_id:guestId,status:'requested',total_amount:total,payment_status:'unpaid',special_requests:special||null}).select('id,booking_reference').single();
+ if(gb.error){showError(gb.error.message);return}
+ const bi=await sb.from('booking_items').insert({booking_id:gb.data.id,item_type:item.type==='activity'?'activity':'ride',activity_id:activityId,description,quantity:qty,unit_price:unit,total_price:total,scheduled_at:scheduledAt,status:'requested',deposit_percentage:depositPct,deposit_amount:activityId?depositAmount:null,balance_due:activityId?balanceDue:null}); 
+ if(bi.error){showError(bi.error.message);return}
+ closeModal(); pendingItem=null;
+ openModal('Request received',`<div class="notice success"><h3>Thank you, ${esc(name)}!</h3><p>Your request has been received.</p><p><b>Booking reference: ${esc(gb.data.booking_reference)}</b></p><p>The ProTrack team will confirm the booking.</p></div><button class="primary" onclick="closeModal()">Done</button>`);
+}
+function showError(msg){openModal('Could not submit',`<div class="notice error">${esc(msg)}</div><p class="muted">If this keeps happening, the ProTrack database permissions for guest bookings need to be enabled.</p>`)}
+async function lookupBooking(){
+ const ref=document.getElementById('lookup_ref').value.trim(); if(!ref)return;
+ const el=document.getElementById('lookup_result');el.innerHTML='Searching…';
+ const r=await sb.from('guest_bookings').select('booking_reference,status,total_amount,payment_status,created_at,booking_items(description,quantity,unit_price,total_price,scheduled_at,status)').eq('booking_reference',ref).maybeSingle();
+ if(r.error){el.innerHTML=`<div class="notice error">${esc(r.error.message)}</div>`;return}
+ if(!r.data){el.innerHTML='<div class="notice">No booking found.</div>';return}
+ el.innerHTML=`<div class="card"><div class="row"><b>${esc(r.data.booking_reference)}</b><span class="pill">${esc(r.data.status)}</span></div><p>Payment: <b>${esc(r.data.payment_status)}</b></p>${(r.data.booking_items||[]).map(i=>`<div class="booking-item"><b>${esc(i.description)}</b><br><span class="muted">${i.quantity} × ${money(i.unit_price)} · ${esc(i.status)}</span></div>`).join('')}</div>`;
+}
+
+let transportSettings=null,transportRoutes=[],transportDestinations=[],transportZones=[],transportZoneFares=[];
+const tr$=id=>document.getElementById(id);
+const trMoney=n=>'$'+Math.round(Number(n||0)).toLocaleString('en-US');
+function trSelectedRoute(){
+ const origin=transportDestinations.find(d=>d.id===tr$('tr_pt_origin')?.value),destination=transportDestinations.find(d=>d.id===tr$('tr_pt_destination')?.value);
+ if(!origin||!destination||origin.id===destination.id||!origin.zone_id||!destination.zone_id||origin.zone_id===destination.zone_id)return null;
+ const fare=transportZoneFares.find(f=>f.active&&((f.zone_a_id===origin.zone_id&&f.zone_b_id===destination.zone_id)||(f.zone_a_id===destination.zone_id&&f.zone_b_id===origin.zone_id)));
+ if(!fare)return null;
+ return {...fare,origin_destination_id:origin.id,destination_destination_id:destination.id,origin_name:origin.name,destination_name:destination.name,zone_origin_name:transportZones.find(z=>z.id===origin.zone_id)?.name||'Zone',zone_destination_name:transportZones.find(z=>z.id===destination.zone_id)?.name||'Zone',fixed_fare_1_2:fare.fixed_fare_1_2,per_person_fare_3_plus:fare.per_person_fare_3_plus,route_id:null};
+}
+function trChooseKind(kind){tr$('tr_kind').value=kind;tr$('tr_kind').dispatchEvent(new Event('change'));}
+function trSyncTransportUI(){
+ const kind=tr$('tr_kind').value;
+ document.querySelectorAll('.transport-type-option').forEach(b=>b.classList.toggle('active',b.dataset.kind===kind));
+ const subtitles={airport_scheduled:'Choose the airport direction and a scheduled departure.',airport_custom:'Choose the airport direction and your preferred pickup time.',point_to_point:'Choose your departure and arrival locations. The fare is based on their assigned zones; Property A is the default pickup.'};
+ const sub=tr$('tr_trip_subtitle');if(sub)sub.textContent=subtitles[kind]||'';
+ const r=trSelectedRoute(),airport=kind!=='point_to_point',direction=tr$('tr_direction').value;
+ let origin,dest;
+ if(!airport){origin=r?.origin_name||transportDestinations.find(d=>d.id===tr$('tr_pt_origin')?.value)?.name||'Choose departure point';dest=r?.destination_name||transportDestinations.find(d=>d.id===tr$('tr_pt_destination')?.value)?.name||'Choose arrival location';}
+ else if(direction==='arrival'){
+  origin=tr$('tr_origin').value.trim()||'Airport pickup';
+  dest=tr$('tr_destination').value.trim()||'Your destination';
+ }else{
+  origin=tr$('tr_origin').value.trim()||'Your pickup location';
+  dest=tr$('tr_destination').value.trim()||'Airport drop-off';
+ }
+ tr$('tr_summary_origin').textContent=origin;
+ tr$('tr_summary_destination').textContent=dest;
+ const kindLabels={airport_scheduled:'Complimentary airport shuttle',airport_custom:'Custom-time airport transfer',point_to_point:'Point-to-point transfer'};
+ tr$('tr_summary_kind').textContent=kindLabels[kind]||'Transfer';
+ const n=Number(tr$('tr_passengers').value||1);
+ tr$('tr_summary_passengers').textContent=`${n} passenger${n===1?'':'s'}`;
+ let dt='';
+ if(kind==='airport_scheduled'&&tr$('tr_date').value&&tr$('tr_slot').value)dt=new Date(`${tr$('tr_date').value}T${tr$('tr_slot').value}:00`);
+ else if(tr$('tr_custom_time').value)dt=new Date(tr$('tr_custom_time').value);
+ tr$('tr_summary_time').textContent=dt&&!Number.isNaN(dt.getTime())?dt.toLocaleString([], {weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'Choose a time';
+ const extras=[];
+ const waiting=Number(tr$('tr_waiting').value||0),stops=Number(tr$('tr_stops').value||0);
+ if(kind==='point_to_point'&&waiting>0)extras.push(`${waiting} min waiting`);
+ if(kind==='point_to_point'&&stops>0)extras.push(`${stops} extra stop${stops===1?'':'s'}`);
+ if(kind==='point_to_point'&&tr$('tr_special').checked)extras.push('Special service');
+ tr$('tr_summary_extras').textContent=extras.length?extras.join(' · '):'None';
+ tr$('tr_summary_extras_row').style.display=kind==='point_to_point'?'flex':'none';
+}
+function trPropertyA(){return transportDestinations.find(d=>d.name.trim().toLowerCase()==='property a')||null}
+function trSetPointToPointDefaults(initial=false){
+ const originEl=tr$('tr_pt_origin'),destEl=tr$('tr_pt_destination');
+ if(!originEl||!destEl||!transportDestinations.length)return;
+ const property=trPropertyA();
+ if(initial&&!originEl.value&&property)originEl.value=property.id;
+ const origin=transportDestinations.find(d=>d.id===originEl.value);
+ if(!destEl.value||destEl.value===originEl.value||!initial){
+  if(property&&origin&&origin.id!==property.id){destEl.value=property.id;}
+  else {
+   const firstPriced=transportDestinations.find(d=>d.id!==originEl.value&&origin?.zone_id&&d.zone_id&&d.zone_id!==origin.zone_id&&transportZoneFares.some(f=>f.active&&((f.zone_a_id===origin.zone_id&&f.zone_b_id===d.zone_id)||(f.zone_a_id===d.zone_id&&f.zone_b_id===origin.zone_id))));
+   destEl.value=firstPriced?.id||transportDestinations.find(d=>d.id!==originEl.value)?.id||'';
+  }
+ }
+ if(destEl.value===originEl.value)destEl.value=transportDestinations.find(d=>d.id!==originEl.value)?.id||'';
+}
+function trHandlePointToPointOriginChange(){
+ const originId=tr$('tr_pt_origin').value,property=trPropertyA();
+ if(property&&originId!==property.id)tr$('tr_pt_destination').value=property.id;
+ else {
+  const origin=transportDestinations.find(d=>d.id===originId);
+  const current=transportDestinations.find(d=>d.id===tr$('tr_pt_destination').value);
+  if(!current||current.id===originId||current.zone_id===origin?.zone_id){
+   const first=transportDestinations.find(d=>d.id!==originId&&origin?.zone_id&&d.zone_id&&d.zone_id!==origin.zone_id&&transportZoneFares.some(f=>f.active&&((f.zone_a_id===origin.zone_id&&f.zone_b_id===d.zone_id)||(f.zone_a_id===d.zone_id&&f.zone_b_id===origin.zone_id))));
+   tr$('tr_pt_destination').value=first?.id||transportDestinations.find(d=>d.id!==originId)?.id||'';
+  }
+ }
+ trApplySelectedRoute();
+}
+function trApplySelectedRoute(){
+ const originId=tr$('tr_pt_origin').value,destinationId=tr$('tr_pt_destination').value;
+ const r=trSelectedRoute();
+ if(originId&&destinationId&&originId===destinationId){
+  tr$('tr_route_match_note').textContent='Departure and arrival must be different locations.';
+  tr$('tr_route_match_note').style.color='#9d5a31';
+ }else if(r){
+  tr$('tr_route_match_note').textContent=`Fare available: ${r.origin_name} (${r.zone_origin_name}) ↔ ${r.destination_name} (${r.zone_destination_name}). Both directions use the same zone fare.`;
+  tr$('tr_route_match_note').style.color='var(--teal-dark)';
+ }else if(originId&&destinationId){
+  tr$('tr_route_match_note').textContent='No active fare exists between these zones yet. Management must assign both locations to zones and configure one price for the zone pair.';
+  tr$('tr_route_match_note').style.color='#9d5a31';
+ }else{
+  tr$('tr_route_match_note').textContent='Choose a departure and arrival. Property A is the default departure; when you choose another departure, Property A becomes the default destination. Locations in each zone share the same zone-to-zone fare.';
+  tr$('tr_route_match_note').style.color='';
+ }
+ trUpdateFare();
+}
+function trApplyAirportEndpoints(){
+ const direction=tr$('tr_direction').value;
+ const airport='Airport - Princess Juliana International Airport';
+ const property='Property A';
+ // Complimentary scheduled airport shuttle uses fixed airport/property endpoints.
+ if(tr$('tr_kind').value==='airport_scheduled'){
+  tr$('tr_origin').value=direction==='arrival'?airport:property;
+  tr$('tr_destination').value=direction==='arrival'?property:airport;
+  tr$('tr_origin').readOnly=true;
+  tr$('tr_destination').readOnly=true;
+  tr$('tr_origin_hint').textContent='Automatically set for the complimentary airport shuttle.';
+  tr$('tr_destination_hint').textContent='Automatically set for the complimentary airport shuttle.';
+ }else if(tr$('tr_kind').value==='airport_custom'){
+  tr$('tr_origin').readOnly=false;
+  tr$('tr_destination').readOnly=false;
+  tr$('tr_origin_hint').textContent='Enter the pickup location.';
+  tr$('tr_destination_hint').textContent='Enter the destination.';
+ }
+}
+function trUpdateType(){
+ const kind=tr$('tr_kind').value,airport=kind!=='point_to_point';
+ [['tr_direction_field',airport],['tr_route_field',!airport],['tr_date_field',kind==='airport_scheduled'],['tr_slot_field',kind==='airport_scheduled'],['tr_custom_time_field',kind!=='airport_scheduled'],['tr_waiting_field',kind==='point_to_point'],['tr_stops_field',kind==='point_to_point'],['tr_special_field',kind==='point_to_point'],['tr_origin_field',airport],['tr_destination_field',airport]].forEach(([id,on])=>tr$(id).style.display=on?'block':'none');
+ tr$('tr_arrival_field').style.display=airport&&tr$('tr_direction').value==='arrival'?'block':'none';
+ tr$('tr_departure_field').style.display=airport&&tr$('tr_direction').value==='departure'?'block':'none';
+ if(kind==='airport_scheduled'){
+  tr$('tr_origin').placeholder='Automatically selected';
+  tr$('tr_destination').placeholder='Automatically selected';
+  trApplyAirportEndpoints();
+ }else if(kind==='airport_custom'){
+  tr$('tr_origin').placeholder='Airport or pickup location';
+  tr$('tr_destination').placeholder='Hotel, property or destination';
+  trApplyAirportEndpoints();
+ }else{
+  tr$('tr_origin').readOnly=true;tr$('tr_destination').readOnly=true;
+  if(kind==='point_to_point')trApplySelectedRoute();
+ }
+ trSyncTransportUI();trUpdateFare();trCheckAvailability();
+}
+function trUpdateFare(){
+ const kind=tr$('tr_kind').value,n=Number(tr$('tr_passengers').value||1),r=trSelectedRoute();
+ let amount=null,note='Final fare is calculated by the server.';
+ if(kind==='airport_scheduled'){
+  amount=0;note='Complimentary scheduled airport shuttle.';
+ }else if(kind==='airport_custom'){
+  amount=n<=2?Number(transportSettings?.airport_custom_fee_1_2??20):n*Number(transportSettings?.airport_custom_per_person_3_plus??8);
+  note='Custom-time airport fee; no time-of-day surcharge.';
+ }else if(r){
+  const base=n<=2?Number(r.fixed_fare_1_2):Number(r.per_person_fare_3_plus)*n;
+  const dt=tr$('tr_custom_time').value?new Date(tr$('tr_custom_time').value):null;
+  let pct=0;
+  if(dt&&!Number.isNaN(dt.getTime())){const h=dt.getHours();pct=h>=22?50:h<7?100:h<8?50:0;}
+  const surcharge=base*pct/100;
+  const waitingMinutes=Number(tr$('tr_waiting').value||0);
+  const stops=Number(tr$('tr_stops').value||0);
+  const waitingFee=Math.ceil(waitingMinutes/15)*Number(r.waiting_fee_per_15_min||0);
+  const stopsFee=stops*Number(r.extra_stop_fee||0);
+  const specialFee=tr$('tr_special').checked?Number(r.special_service_fee||0):0;
+  amount=Math.round(base+surcharge+waitingFee+stopsFee+specialFee);
+  const extras=[];
+  if(waitingMinutes>0)extras.push(`waiting ${trMoney(waitingFee)}`);
+  if(stops>0)extras.push(`extra stops ${trMoney(stopsFee)}`);
+  if(tr$('tr_special').checked)extras.push(`special service ${trMoney(specialFee)}`);
+  note=`Indicative route fare; time surcharge ${pct}%.${extras.length?' Includes '+extras.join(', ')+'.':' No optional extras selected.'}`;
+ }
+ tr$('tr_fare').textContent=amount===null?'$—':trMoney(amount);
+ tr$('tr_fare_note').textContent=note;
+ trSyncTransportUI();
+}
+async function trCheckAvailability(){if(!transportSettings)return;const kind=tr$('tr_kind').value,dt=kind==='airport_scheduled'?(tr$('tr_date').value&&tr$('tr_slot').value?`${tr$('tr_date').value}T${tr$('tr_slot').value}:00`:''):tr$('tr_custom_time').value;if(!dt){tr$('tr_availability').textContent='Choose a pickup date and time to check availability.';return}const d=new Date(dt);if(Number.isNaN(d.getTime()))return;tr$('tr_availability').textContent='Checking availability…';try{const {data,error}=await sb.rpc('transport_check_availability',{p_request_type:kind,p_airport_direction:kind==='point_to_point'?null:tr$('tr_direction').value,p_pickup_at:d.toISOString(),p_passenger_count:Number(tr$('tr_passengers').value)});if(error)throw error;tr$('tr_availability').textContent=data.message||(data.available?'Availability looks good.':'Not available.')}catch(e){tr$('tr_availability').textContent='Availability check: '+e.message}}
+async function initTransportGuest(){try{
+ const [s,d,z,f]=await Promise.all([
+  sb.rpc('transport_get_settings'),
+  sb.from('transport_destinations').select('id,name,zone_id').eq('active',true).order('name'),
+  sb.from('transport_zones').select('id,name,active').eq('active',true).order('name'),
+  sb.from('transport_zone_fares').select('id,zone_a_id,zone_b_id,fixed_fare_1_2,per_person_fare_3_plus,estimated_duration_minutes,waiting_fee_per_15_min,extra_stop_fee,special_service_fee,active').eq('active',true)
+ ]);
+ for(const x of [s,d,z,f])if(x.error)throw x.error;
+ transportSettings=s.data||{};transportDestinations=d.data||[];transportZones=z.data||[];transportZoneFares=f.data||[];
+ const destinationOptions='<option value="">Choose a location</option>'+transportDestinations.map(x=>`<option value="${x.id}">${esc(x.name)}${x.zone_id?' · '+esc(transportZones.find(z=>z.id===x.zone_id)?.name||'Unassigned'):''}</option>`).join('');
+ tr$('tr_pt_origin').innerHTML=destinationOptions;tr$('tr_pt_destination').innerHTML=destinationOptions;trSetPointToPointDefaults(true);
+ const slots=transportSettings.airport_departure_slots||['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00'];tr$('tr_slot').innerHTML=slots.map(x=>`<option value="${esc(x)}">${esc(formatActivityTime(x))}</option>`).join('');
+ const now=new Date();now.setMinutes(now.getMinutes()+Number(transportSettings.min_advance_minutes??20));const pad=n=>String(n).padStart(2,'0');const minDate=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;tr$('tr_date').min=minDate;tr$('tr_date').value=minDate;tr$('tr_custom_time').min=`${minDate}T${pad(now.getHours())}:${pad(now.getMinutes())}`;trUpdateType();
+ }catch(e){tr$('tr_result').innerHTML=`<div class="notice error">Transportation is not available yet: ${esc(e.message)}. Management may need to apply the transport SQL setup and zone-pricing migration.</div>`;tr$('tr_fare_note').textContent='Transport rates could not be loaded.'}}
+async function submitTransportRequest(){const btn=tr$('tr_submit');btn.disabled=true;tr$('tr_result').innerHTML='<div class="notice">Submitting request…</div>';try{const kind=tr$('tr_kind').value,dt=kind==='airport_scheduled'?(tr$('tr_date').value&&tr$('tr_slot').value?`${tr$('tr_date').value}T${tr$('tr_slot').value}:00`:''):tr$('tr_custom_time').value;if(!dt)throw new Error('Choose a pickup date and time.');const pickup=new Date(dt);if(Number.isNaN(pickup.getTime()))throw new Error('Pickup date/time is invalid.');const r=trSelectedRoute();if(kind==='point_to_point'&&!r)throw new Error(tr$('tr_route_match_note').textContent||'No Management-configured zone fare matches these locations.');const pickupText=kind==='point_to_point'?r.origin_name:tr$('tr_origin').value.trim();const destinationText=kind==='point_to_point'?r.destination_name:tr$('tr_destination').value.trim();if(!pickupText||!destinationText)throw new Error('Enter both pickup and destination locations.');if(!tr$('tr_name').value.trim()||!tr$('tr_phone').value.trim())throw new Error('Guest name and phone number are required.');const {data,error}=await sb.rpc('transport_create_zone_request',{p_request_type:kind,p_airport_direction:kind==='point_to_point'?null:tr$('tr_direction').value,p_guest_name:tr$('tr_name').value.trim(),p_guest_phone:tr$('tr_phone').value.trim(),p_arrival_flight_number:tr$('tr_arrival_flight').value.trim()||null,p_departure_flight_number:tr$('tr_departure_flight').value.trim()||null,p_origin_text:pickupText,p_destination_text:destinationText,p_pickup_at:pickup.toISOString(),p_passenger_count:Number(tr$('tr_passengers').value),p_origin_destination_id:kind==='point_to_point'?tr$('tr_pt_origin').value:null,p_destination_destination_id:kind==='point_to_point'?tr$('tr_pt_destination').value:null,p_waiting_minutes:Number(tr$('tr_waiting').value||0),p_extra_stops:Number(tr$('tr_stops').value||0),p_special_service:tr$('tr_special').checked,p_notes:[tr$('tr_room_number').value.trim()?`Room number: ${tr$('tr_room_number').value.trim()}`:'',tr$('tr_notes').value.trim()].filter(Boolean).join(' | ')||null});if(error)throw error;tr$('tr_fare').textContent=trMoney(data.total_fare);tr$('tr_result').innerHTML=`<div class="notice success"><h3>Request received</h3><p>Reference: <b>${esc(data.reference)}</b></p><p>Status: Pending Management approval</p><p>Quoted fare: <b>${trMoney(data.total_fare)}</b></p><p>Hold expires: ${esc(new Date(data.hold_expires_at).toLocaleString())}</p><p>Save your reference. This is not a confirmed booking yet.</p></div>`}catch(e){tr$('tr_result').innerHTML=`<div class="notice error">${esc(e.message||String(e))}</div>`}finally{btn.disabled=false}}
+['tr_kind','tr_direction','tr_passengers','tr_date','tr_slot','tr_custom_time','tr_waiting','tr_stops','tr_special','tr_origin','tr_destination'].forEach(id=>{
+ const e=tr$(id);if(!e)return;
+ const update=()=>{trUpdateType();trUpdateFare();trSyncTransportUI();if(['tr_kind','tr_direction','tr_passengers','tr_date','tr_slot','tr_custom_time'].includes(id))trCheckAvailability()};
+ e.addEventListener((id==='tr_origin'||id==='tr_destination'||id==='tr_waiting'||id==='tr_stops')?'input':'change',update);
+});
+tr$('tr_pt_origin')?.addEventListener('change',trHandlePointToPointOriginChange);
+tr$('tr_pt_destination')?.addEventListener('change',trApplySelectedRoute);
+tr$('tr_kind').addEventListener('change',()=>{trUpdateType();trUpdateFare();trCheckAvailability()});
+
+document.addEventListener('DOMContentLoaded',()=>{loadCatalog();initTransportGuest()});
+</script>
+</body>
+</html>
